@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Sale" ADD COLUMN     "roundOff" DECIMAL(18,2) NOT NULL DEFAULT 0;

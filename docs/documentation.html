@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SoftGlaze Stock Manager — Documentation</title>
+<style>
+  :root{
+    --accent:#ff9f43; --accent-hover:#ff851a; --ink:#1f2733; --muted:#5b6670;
+    --line:#e7eaee; --bg:#fafbfe; --card:#ffffff; --code-bg:#f4f6f9; --navy:#092c4c;
+    --ok:#2fa84f; --warn:#e6a100;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;font-size:15.5px}
+  a{color:var(--accent-hover);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,pre{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.86em}
+  pre{background:#0f1a24;color:#e6edf3;border-radius:10px;padding:16px 18px;overflow:auto;font-size:13.5px;line-height:1.55}
+  pre code{background:none;border:none;padding:0;color:inherit}
+  .layout{display:flex;max-width:1180px;margin:0 auto;gap:28px;padding:0 22px}
+  /* Sidebar */
+  aside{width:260px;flex-shrink:0}
+  .sidenav{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;padding:18px 0}
+  .brand{display:flex;align-items:center;gap:11px;padding:0 6px 16px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .brand .logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#ffb570,#ff9f43);display:grid;place-items:center;color:#fff;font-weight:800;font-size:19px}
+  .brand b{font-size:15.5px;display:block;line-height:1.2}
+  .brand span{font-size:11.5px;color:var(--muted)}
+  .sidenav a{display:block;color:var(--muted);padding:6px 10px;border-radius:8px;font-size:14px;font-weight:600}
+  .sidenav a:hover{background:#fff;color:var(--ink);text-decoration:none}
+  .sidenav .grouplabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9aa3ad;font-weight:800;padding:14px 10px 4px}
+  /* Content */
+  main{flex:1;min-width:0;padding:26px 0 90px}
+  .hero{background:linear-gradient(135deg,var(--navy),#123a5e);color:#fff;border-radius:16px;padding:34px 34px;margin-bottom:26px}
+  .hero h1{margin:0 0 6px;font-size:30px;letter-spacing:-.4px}
+  .hero p{margin:0;color:#cfe0ee;max-width:64ch}
+  .hero .pill{display:inline-block;background:rgba(255,159,67,.22);color:#ffd9b0;border:1px solid rgba(255,159,67,.45);border-radius:999px;padding:3px 12px;font-size:12.5px;font-weight:700;margin-bottom:14px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-bottom:20px;scroll-margin-top:16px}
+  section > h2{margin:0 0 14px;font-size:22px;letter-spacing:-.3px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  section h3{margin:22px 0 8px;font-size:16.5px}
+  ul{padding-left:20px}
+  li{margin:3px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--code-bg);font-weight:700}
+  .note,.tip,.warn{border-radius:10px;padding:12px 15px;margin:14px 0;font-size:14px;border:1px solid}
+  .note{background:#eef6ff;border-color:#cfe4fb}
+  .tip{background:#eefaf0;border-color:#cdeccf}
+  .warn{background:#fff7e6;border-color:#ffe2a8}
+  .note b,.tip b,.warn b{display:block;margin-bottom:2px}
+  .feat{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px;margin-top:6px}
+  @media(max-width:820px){.feat{grid-template-columns:1fr}}
+  .feat .k{font-weight:800;color:var(--navy)}
+  .step{counter-reset:none}
+  ol.steps{counter-reset:s;list-style:none;padding-left:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:2px 0 16px 42px;margin:0}
+  ol.steps>li:before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px}
+  footer{max-width:1180px;margin:0 auto;padding:26px 22px 50px;color:var(--muted);font-size:13.5px;border-top:1px solid var(--line)}
+  .topbtn{position:fixed;right:18px;bottom:18px;background:var(--accent);color:#fff;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;box-shadow:0 6px 20px rgba(255,159,67,.5)}
+  .kbd{background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12.5px;font-family:inherit;font-weight:700}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <nav class="sidenav">
+      <div class="brand"><div class="logo">SG</div><div><b>SoftGlaze</b><span>Stock Manager · Docs</span></div></div>
+      <div class="grouplabel">Getting started</div>
+      <a href="#intro">Introduction</a>
+      <a href="#features">Features</a>
+      <a href="#requirements">Requirements</a>
+      <a href="#install">Installation</a>
+      <a href="#config">Configuration</a>
+      <a href="#firstrun">First run &amp; business types</a>
+      <div class="grouplabel">Using the app</div>
+      <a href="#pos">Point of sale</a>
+      <a href="#inventory">Inventory</a>
+      <a href="#people">Customers &amp; vendors</a>
+      <a href="#money">Money &amp; reports</a>
+      <a href="#settings">Settings &amp; users</a>
+      <div class="grouplabel">Operations</div>
+      <a href="#production">Production &amp; hosting</a>
+      <a href="#desktop">Desktop installer</a>
+      <a href="#backup">Backup &amp; restore</a>
+      <a href="#integrity">Accounting integrity</a>
+      <a href="#update">Updating</a>
+      <div class="grouplabel">Reference</div>
+      <a href="#credits">Credits</a>
+      <a href="#changelog">Changelog</a>
+      <a href="#support">Support</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <span class="pill">Documentation · v1.0</span>
+      <h1>SoftGlaze Stock Manager</h1>
+      <p>A premium Inventory + Point‑of‑Sale system for retail and wholesale shops — one
+      codebase for the browser and the Windows desktop, with first‑class pay‑later (udhaar)
+      credit and rock‑solid double‑entry accounting.</p>
+    </div>
+
+    <section id="intro">
+      <h2>Introduction</h2>
+      <p>Thank you for choosing <b>SoftGlaze Stock Manager</b>. It runs two ways from a single
+      code base:</p>
+      <ul>
+        <li><b>Browser app</b> — host it on your own server / VPS and use it from any device.</li>
+        <li><b>Windows desktop app</b> — an Electron installer for the shop counter PC.</li>
+      </ul>
+      <p>It is <b>business‑agnostic</b>: choose a Business Type preset and it seeds the right
+      categories, units and sample products. Money is handled as exact decimals and every
+      financial action is a single database transaction, so the books never drift.</p>
+      <div class="note"><b>Who this is for</b>Shop owners and developers deploying a modern POS.
+      Basic familiarity with Node.js and PostgreSQL is enough to self‑host; the desktop build
+      needs no server knowledge for the end user.</div>
+    </section>
+
+    <section id="features">
+      <h2>Features</h2>
+      <div class="feat">
+        <div><span class="k">POS</span> — full‑screen, keyboard‑first, image tiles, category sidebar, favourites, held bills, quotations.</div>
+        <div><span class="k">Payments</span> — cash, split payments, pay‑later (udhaar), change due, receipt print (80mm + A4/PDF).</div>
+        <div><span class="k">Inventory</span> — standard / service / combo products, weighted‑average cost, barcodes, multi‑image, low‑stock alerts.</div>
+        <div><span class="k">Purchasing</span> — purchases, purchase orders → GRN, returns, landed cost, vendor payables.</div>
+        <div><span class="k">Receivables</span> — customer ledgers, credit limits, promises‑to‑pay, cheques, sites/projects.</div>
+        <div><span class="k">Money</span> — multiple cash/bank/wallet accounts, transfers, capital &amp; drawings, day close.</div>
+        <div><span class="k">Expenses &amp; HR</span> — expenses (incl. recurring), employees, salaries &amp; advances.</div>
+        <div><span class="k">Reports</span> — dashboard, P&amp;L, balance sheet, stock valuation, registers — PDF + Excel.</div>
+        <div><span class="k">Messaging</span> — WhatsApp (wa.me) &amp; SMTP email receipts/reminders.</div>
+        <div><span class="k">Security</span> — roles &amp; permissions, 2FA (TOTP), audit log.</div>
+        <div><span class="k">Data</span> — bulk import/export wizard, full JSON backup &amp; restore, optional offsite backup.</div>
+        <div><span class="k">UI</span> — warm‑orange design system, light/dark, responsive, animated charts.</div>
+      </div>
+    </section>
+
+    <section id="requirements">
+      <h2>Requirements</h2>
+      <table>
+        <tr><th>Component</th><th>Version</th><th>Notes</th></tr>
+        <tr><td>Node.js</td><td>18+ (20/22 recommended)</td><td>ships with npm</td></tr>
+        <tr><td>PostgreSQL</td><td>14+</td><td>local, Docker, or managed</td></tr>
+        <tr><td>Disk</td><td>~500&nbsp;MB</td><td>for dependencies</td></tr>
+        <tr><td>OS</td><td>Windows / macOS / Linux</td><td>desktop installer targets Windows</td></tr>
+      </table>
+    </section>
+
+    <section id="install">
+      <h2>Installation (development)</h2>
+      <ol class="steps">
+        <li><b>Install dependencies</b><pre><code>npm install</code></pre></li>
+        <li><b>Configure the API</b> — copy the example env and edit it:
+          <pre><code>cp apps/server/.env.example apps/server/.env</code></pre>
+          Set <code>DATABASE_URL</code> and strong <code>JWT_SECRET</code> / <code>JWT_REFRESH_SECRET</code> values.</li>
+        <li><b>Create the schema &amp; seed defaults</b><pre><code>npm run db:migrate
+npm run db:seed</code></pre></li>
+        <li><b>Run it</b> (web on 5173, API on 4000)<pre><code>npm run dev</code></pre></li>
+        <li>Open <a href="http://localhost:5173">http://localhost:5173</a>.</li>
+      </ol>
+      <div class="tip"><b>No PostgreSQL yet?</b> The quickest option is Docker
+      (<code>docker run -e POSTGRES_PASSWORD=… -p 5432:5432 postgres</code>) or install
+      PostgreSQL directly and create a database named <code>softglaze</code>.</div>
+    </section>
+
+    <section id="config">
+      <h2>Configuration</h2>
+      <p>All server configuration lives in <code>apps/server/.env</code>:</p>
+      <table>
+        <tr><th>Key</th><th>Example</th><th>Notes</th></tr>
+        <tr><td>DATABASE_URL</td><td>postgresql://user:pass@localhost:5432/softglaze?schema=public</td><td>PostgreSQL connection</td></tr>
+        <tr><td>PORT</td><td>4000</td><td>API port</td></tr>
+        <tr><td>NODE_ENV</td><td>development / production</td><td></td></tr>
+        <tr><td>JWT_SECRET / JWT_REFRESH_SECRET</td><td><i>random 32‑byte hex</i></td><td><code>openssl rand -hex 32</code></td></tr>
+        <tr><td>ACCESS_TOKEN_TTL / REFRESH_TOKEN_TTL</td><td>15m / 7d</td><td>session lifetimes</td></tr>
+        <tr><td>CORS_ORIGIN</td><td>http://localhost:5173</td><td>allowed web origin</td></tr>
+        <tr><td>UPLOAD_DIR</td><td>uploads</td><td>image storage folder</td></tr>
+      </table>
+      <div class="warn"><b>Security</b>Always set unique random JWT secrets in production, and
+      never commit your <code>.env</code> file or the <code>uploads/</code> folder.</div>
+    </section>
+
+    <section id="firstrun">
+      <h2>First run &amp; business types</h2>
+      <p>On a fresh install the app detects that no owner exists and shows <b>Register</b>.
+      The first account you create becomes the <b>Super Admin / owner</b>; public registration
+      then closes and further staff are created under <b>Users &amp; Roles</b>.</p>
+      <p>The owner is guided through onboarding to pick a <b>Business Type</b>. You can change
+      or re‑apply it any time under <b>Settings → Business Type</b> — it adds starter
+      categories, units and sample products and never deletes your data.</p>
+      <table>
+        <tr><th>Preset</th><th>Seeds &amp; suits</th></tr>
+        <tr><td>Building Materials</td><td>Iron/steel (sariya, girders), cement, sand, pipes, hardware; weight calculator for rods/sheets.</td></tr>
+        <tr><td>General / Kiryana Store</td><td>Grocery &amp; everyday retail units and categories.</td></tr>
+        <tr><td>Electronics</td><td>Devices &amp; accessories.</td></tr>
+        <tr><td>Clothing</td><td>Apparel.</td></tr>
+        <tr><td>Pharmacy</td><td>Medicines with batch / expiry handling.</td></tr>
+        <tr><td>Hardware</td><td>Tools &amp; fittings.</td></tr>
+        <tr><td>Custom</td><td>Start empty and build your own.</td></tr>
+      </table>
+    </section>
+
+    <section id="pos">
+      <h2>Point of sale</h2>
+      <p>Open <b>Sell → POS / New Sale</b> for a full‑screen till.</p>
+      <ul>
+        <li>Search products by name / SKU / barcode (<span class="kbd">F2</span>), or tap the image tiles; use the category sidebar and favourites to browse fast.</li>
+        <li>Pick a customer (or leave <i>Walk‑in</i>); add one on the fly. Contract rates and price groups auto‑apply.</li>
+        <li>Take <b>cash</b>, <b>split</b> across accounts, or leave a balance as <b>udhaar</b> (pay‑later) — respecting the customer's credit limit.</li>
+        <li><b>Hold</b> a bill, save a <b>Quotation</b>, or <b>Complete</b> and print (80mm thermal or A4 / PDF).</li>
+      </ul>
+      <div class="tip"><b>Shortcuts</b> <span class="kbd">F2</span> search · <span class="kbd">F9</span> payment · <span class="kbd">F10</span> complete · <span class="kbd">Esc</span> void line.</div>
+    </section>
+
+    <section id="inventory">
+      <h2>Inventory</h2>
+      <ul>
+        <li><b>Products</b> — grid or table view, KPI cards, images, prices, live stock badges. Types: standard (tracks stock), service (no stock), combo (bundle that deducts components).</li>
+        <li><b>Stock</b> — adjustments with categorised reasons (breakage, theft, count correction…), which feed the shrinkage report.</li>
+        <li><b>Purchases &amp; Purchase Orders</b> — receive stock (weighted‑average cost auto‑updates), record vendor bills and returns; POs partially receive into GRNs.</li>
+        <li><b>Weight Calc / Cutting</b> — for steel sold by weight (rods/sheets) and bar cutting jobs.</li>
+        <li><b>Categories / Brands / Units</b> — full CRUD with images.</li>
+      </ul>
+    </section>
+
+    <section id="people">
+      <h2>Customers &amp; vendors</h2>
+      <ul>
+        <li><b>Customers</b> — ledgers, opening balances, credit limits, sites/projects, price groups, loyalty points, statements.</li>
+        <li><b>Vendors</b> — payables, opening balances, debit/credit notes.</li>
+        <li><b>Promises &amp; cheques</b> — track promises‑to‑pay and post‑dated cheques through clearing/bounce.</li>
+      </ul>
+    </section>
+
+    <section id="money">
+      <h2>Money &amp; reports</h2>
+      <ul>
+        <li><b>Accounts &amp; cash</b> — cash drawer, bank and wallet accounts; transfers, capital &amp; drawings, day close, bank reconciliation.</li>
+        <li><b>Payments &amp; expenses</b> — receive/pay against ledgers; expenses including recurring monthly costs.</li>
+        <li><b>Reports</b> — dashboard, accrual Profit &amp; Loss, balance sheet, stock valuation, sales &amp; purchase registers, comparative (MoM/YoY). Every report exports to <b>PDF</b> and <b>Excel</b>.</li>
+      </ul>
+    </section>
+
+    <section id="settings">
+      <h2>Settings &amp; users</h2>
+      <ul>
+        <li><b>Shop Profile</b> — name, logo &amp; favicon (drag‑drop), contact, tax numbers, invoice header/footer, receipt size, rounding, loyalty.</li>
+        <li><b>Business Type</b> — apply presets.</li>
+        <li><b>Roles &amp; Permissions</b> — data‑driven matrix per role; the server enforces every permission.</li>
+        <li><b>Integrations</b> — WhatsApp mode &amp; templates, SMTP email, SMS gateway, offsite cloud backup.</li>
+        <li><b>Security</b> — enable 2FA (TOTP). <b>Audit Log</b> — every important action, filterable.</li>
+        <li><b>Users &amp; Roles</b> — create staff, set roles &amp; commission, reset passwords. Each user can set their own name, phone, password and <b>profile picture</b> from the account menu.</li>
+      </ul>
+    </section>
+
+    <section id="production">
+      <h2>Production &amp; hosting</h2>
+      <ol class="steps">
+        <li><b>Build</b> both apps:<pre><code>npm run build</code></pre></li>
+        <li><b>Single‑origin mode</b> — set <code>SERVE_WEB=1</code> and <code>NODE_ENV=production</code> so the API also serves the built web app (<code>/api</code> and <code>/uploads</code> stay untouched).</li>
+        <li>Run the API with a process manager (PM2) behind Nginx with HTTPS; point <code>DATABASE_URL</code> at your production PostgreSQL.</li>
+      </ol>
+      <p>A detailed VPS walkthrough (Nginx + PM2 + Postgres, backups, TLS) is in
+      <code>docs/07-DEPLOYMENT.md</code>.</p>
+    </section>
+
+    <section id="desktop">
+      <h2>Desktop installer (Windows) — fully offline</h2>
+      <p>The <code>apps/desktop</code> workspace packages the built API + web <b>and a bundled
+      PostgreSQL</b> into one installable Windows app. The shop PC needs <b>no separate
+      database and no internet</b>. On first launch the app creates a private database under
+      <code>%APPDATA%/SoftGlaze/pgdata</code>, applies all migrations, seeds the shop
+      defaults, and opens the shop — a splash screen shows while that ~1‑minute first‑run
+      setup happens. Uploads are stored under <code>%APPDATA%/SoftGlaze/uploads</code>.</p>
+      <ol class="steps">
+        <li>From <code>apps/desktop</code>, build the installer: <pre><code>cd apps/desktop
+npm run dist</code></pre> This generates the Prisma client, builds the server + web, stages a
+        minimal PostgreSQL runtime (~120&nbsp;MB) into <code>vendor/pgsql</code>, then bundles
+        everything with electron‑builder.</li>
+        <li>The generated <code>release/SoftGlaze-Stock-Manager-Setup-x.x.x.exe</code> installs
+        the app (per‑user; the install folder can be changed).</li>
+        <li>Launch <b>SoftGlaze Stock Manager</b>, register the owner account, pick a business
+        type, and start selling — everything runs locally.</li>
+      </ol>
+      <div class="note"><b>Bundled PostgreSQL source.</b> The build copies a minimal PostgreSQL
+      16 runtime from <code>../pg/pgsql</code> (or the folder in the <code>SOFTGLAZE_PG_DIR</code>
+      environment variable — any PostgreSQL 16 for Windows install works). Stop the dev API
+      server before building so Windows doesn't lock the Prisma engine DLL.</div>
+      <div class="note"><b>External database instead?</b> Edit
+      <code>%APPDATA%/SoftGlaze/softglaze.config.json</code> and set <code>"embeddedDb": false</code>
+      with a <code>"databaseUrl"</code> to point the desktop app at your own PostgreSQL.</div>
+    </section>
+
+    <section id="backup">
+      <h2>Backup &amp; restore</h2>
+      <p><b>Settings → Backup</b> downloads a full portable JSON snapshot of everything —
+      products, sales, customers, money, settings. <b>Restore</b> wipes and reloads from a
+      snapshot in one transaction (you may need to sign in again afterward). You can also
+      enable a nightly upload to a pre‑signed S3 / Google Cloud URL under
+      <b>Settings → Integrations</b>.</p>
+      <div class="warn"><b>Restore replaces everything</b>Only restore to recover — it wipes
+      the current data before loading the backup.</div>
+    </section>
+
+    <section id="integrity">
+      <h2>Accounting integrity</h2>
+      <p>Financial correctness is guaranteed by design:</p>
+      <ul>
+        <li>Money is an exact <code>Decimal</code>; every financial write is one atomic transaction.</li>
+        <li>Stock (<code>StockMovement</code>) and money (<code>AccountEntry</code>) ledgers are the source of truth; cached balances are updated in the same transaction.</li>
+        <li>Documents are never hard‑deleted (cancel / return instead).</li>
+        <li><code>GET /reports/integrity</code> verifies caches, per‑document totals, customer/vendor reconciliation and that <b>Assets = Liabilities + Equity</b> — it should always be all‑green.</li>
+      </ul>
+    </section>
+
+    <section id="update">
+      <h2>Updating</h2>
+      <ol class="steps">
+        <li>Back up first (Settings → Backup, and/or a database dump).</li>
+        <li>Replace the source with the new version, keeping your <code>.env</code> and <code>uploads/</code>.</li>
+        <li>Install &amp; migrate:<pre><code>npm install
+npm run db:migrate
+npm run build</code></pre></li>
+        <li>Restart the API (and rebuild the desktop installer if you distribute it).</li>
+      </ol>
+    </section>
+
+    <section id="credits">
+      <h2>Credits &amp; third‑party</h2>
+      <p>Built with these excellent open‑source projects: React, Vite, Tailwind CSS,
+      TanStack Query, React Router, Recharts, Lucide icons, Express, Prisma, Zod, sharp,
+      pdfmake &amp; exceljs, Electron. Fonts: Nunito &amp; JetBrains Mono. Please retain each
+      project's own license.</p>
+    </section>
+
+    <section id="changelog">
+      <h2>Changelog</h2>
+      <h3>v1.0.0</h3>
+      <ul>
+        <li>Initial release — POS, inventory, purchasing, receivables/payables, money &amp; reports.</li>
+        <li>Business‑type presets, roles &amp; permissions, 2FA, audit log.</li>
+        <li>WhatsApp + SMTP messaging, loyalty, bulk import/export, backup &amp; restore.</li>
+        <li>UI refresh: full‑width layout, dashboard &amp; sales KPI cards + charts, product grid with images, owner avatar, sticky app shell.</li>
+      </ul>
+    </section>
+
+    <section id="support">
+      <h2>Support</h2>
+      <p>For configuration questions, start with this document and the in‑app <b>Settings</b>.
+      For anything else, contact support through your purchase channel. When reporting an
+      issue, include the exact error text, your OS, Node.js and PostgreSQL versions, and the
+      steps to reproduce.</p>
+      <p style="margin-top:14px;color:var(--muted)">Thank you for using SoftGlaze Stock Manager. 💎</p>
+    </section>
+  </main>
+</div>
+
+<a href="#" class="topbtn" title="Back to top">↑</a>
+<footer>© SoftGlaze Stock Manager — Documentation v1.0. All product names and logos are
+property of their respective owners.</footer>
+</body>
+</html>

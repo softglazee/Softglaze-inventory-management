@@ -1,0 +1,5 @@
+# electron-builder output
+release/
+dist/
+# staged PostgreSQL runtime (copied from the portable pg at build time)
+vendor/

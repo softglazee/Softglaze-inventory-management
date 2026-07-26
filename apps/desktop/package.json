@@ -1,0 +1,21 @@
+{
+  "name": "@softglaze/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.cjs",
+  "description": "SoftGlaze Stock Manager — Windows desktop shell (Electron)",
+  "author": "SoftGlaze",
+  "scripts": {
+    "start": "electron .",
+    "stage-pg": "node scripts/stage-pg.cjs",
+    "prebuild-all": "npx prisma generate --schema ../server/prisma/schema.prisma && npm run build --prefix ../server && npm run build --prefix ../web && node scripts/stage-pg.cjs",
+    "predist": "npm run prebuild-all",
+    "dist": "electron-builder --win nsis",
+    "prepack": "npm run prebuild-all",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}

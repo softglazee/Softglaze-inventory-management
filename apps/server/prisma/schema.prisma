@@ -1,0 +1,1391 @@
+// SoftGlaze — Complete Database Schema
+// Covers: users/roles, categories, units, products+images, customers, vendors,
+// purchases, sales/POS, returns, payments, expenses, stock ledger, audit log, settings.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // For pure-offline desktop you can switch to "sqlite" (see docs/07-DEPLOYMENT.md)
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── AUTH & USERS ───────────────────────────
+
+enum Role {
+  SUPER_ADMIN // global owner: settings, business type, integrations, everything
+  ADMIN      // everything except super-admin global settings
+  MANAGER    // everything except user management & settings
+  CASHIER    // POS, customers, view products
+  ACCOUNTANT // payments, expenses, reports, ledgers
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  phone        String?
+  passwordHash String
+  role         Role      @default(CASHIER)
+  isActive     Boolean   @default(true)
+  avatar       String?   // profile picture web path (/uploads/avatars/…webp)
+  commissionPercent Decimal @default(0) @db.Decimal(5, 2) // F3 — salesman commission on their net sales
+  totpSecret   String?   // H3 — base32 TOTP secret (2FA), null = not enrolled
+  totpEnabled  Boolean   @default(false) // H3 — 2FA required at login for this user
+  refreshToken String?   // hashed refresh token
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sales          Sale[]
+  purchases      Purchase[]
+  payments       Payment[]
+  expenses       Expense[]
+  adjustments    StockAdjustment[]
+  auditLogs      AuditLog[]
+  salariesPaid   SalaryPayment[]
+  fundTransfers  FundTransfer[]
+  capitalEntries CapitalEntry[]
+  cheques          Cheque[]
+  deliveryNotes    DeliveryNote[]
+  bookings         Booking[]
+  employeeAdvances EmployeeAdvance[]
+  leaveApprovals   LeaveRequest[]  @relation("LeaveApprover")
+  paymentPromises  PaymentPromise[]
+  dayCloses        DayClose[]
+  deliveryTrips    DeliveryTrip[]
+  cuttingJobs      CuttingJob[]
+  priceLogs        PriceHistory[]
+  vendorNotes      VendorNote[]
+  purchaseOrders   PurchaseOrder[]
+  savedFilters     SavedFilter[]
+}
+
+// ─────────────────────────── PERMISSIONS (A2) ───────────────────────────
+// Data-driven RBAC. `requireRole` still guards routes today; `requirePermission`
+// reads these tables so SUPER_ADMIN can retune the matrix (full editor UI in Phase 6).
+// SUPER_ADMIN implicitly holds ALL permissions and is never stored/editable here.
+
+model Permission {
+  key   String @id            // "products.create"
+  group String                // "Products" (for grouping in the matrix UI)
+  label String                // "Create products"
+  sort  Int    @default(0)    // display order within a group
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  role          Role
+  permissionKey String
+  permission    Permission @relation(fields: [permissionKey], references: [key], onDelete: Cascade)
+
+  @@id([role, permissionKey])
+  @@index([permissionKey])
+}
+
+// ─────────────────────────── MASTER DATA ───────────────────────────
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique          // Cement, Iron Rods, Windows, Doors, Pipes...
+  parentId  String?
+  parent    Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children  Category[] @relation("SubCategories")
+  image     String?
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  products  Product[]
+}
+
+model Unit {
+  id         String  @id @default(cuid())
+  name       String  @unique   // Bag, Kg, Ton, Piece, Foot, Sq-Ft, Bundle, Length
+  shortName  String  @unique   // bag, kg, t, pc, ft, sqft, bdl, len
+  // Optional conversion to a base unit (e.g. Ton -> base Kg, factor 1000)
+  baseUnitId String?
+  baseUnit   Unit?   @relation("UnitConversion", fields: [baseUnitId], references: [id])
+  derived    Unit[]  @relation("UnitConversion")
+  factor     Decimal @default(1) @db.Decimal(18, 6)
+
+  products   Product[]
+}
+
+// STANDARD = tracks stock; SERVICE = no stock (delivery/labour/fees);
+// COMBO = bundle whose sale deducts component stock (logic lands in Phase 2).
+enum ProductType {
+  STANDARD
+  SERVICE
+  COMBO
+}
+
+// C1 — how the rod/sheet weight calculator derives weight for this product.
+// NONE = plain product (no calculator). ROD = round bar by diameter (sariya),
+// weight from πr²×length×density. SHEET = flat plate by thickness × area.
+// Purely a POS/quotation entry aid — it fills the sale line's qty; it never
+// changes stock/pricing logic, so it has zero accounting effect.
+enum WeightCalc {
+  NONE
+  ROD
+  SHEET
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String    @unique          // Lucky, Ittehad, Master, Diamond...
+  image     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  products  Product[]
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  sku            String   @unique            // auto-generated e.g. IRN-0001
+  barcode        String?  @unique
+  name           String                       // "Sariya 12mm Grade-60", "Lucky Cement 50kg"
+  description    String?
+  type           ProductType @default(STANDARD)
+  categoryId     String
+  category       Category @relation(fields: [categoryId], references: [id])
+  unitId         String
+  unit           Unit     @relation(fields: [unitId], references: [id])
+  brandId        String?
+  brand          Brand?   @relation(fields: [brandId], references: [id])
+  costPrice      Decimal  @default(0) @db.Decimal(18, 2) // weighted avg, auto-updated on purchase
+  salePrice      Decimal  @default(0) @db.Decimal(18, 2)
+  wholesalePrice Decimal? @db.Decimal(18, 2)
+  taxPercent     Decimal  @default(0) @db.Decimal(5, 2)
+  stockQty       Decimal  @default(0) @db.Decimal(18, 3)  // cached; ledger is source of truth
+  minStockLevel  Decimal  @default(0) @db.Decimal(18, 3)  // low-stock alert threshold
+  // Optional physical dimensions (G10) — shown on detail, optional on invoice
+  length         Decimal? @db.Decimal(12, 3)
+  width          Decimal? @db.Decimal(12, 3)
+  height         Decimal? @db.Decimal(12, 3)
+  weight         Decimal? @db.Decimal(12, 3)
+  // C1 — rod/sheet weight calculator profile. All optional; only used when
+  // weightCalc != NONE so the POS can turn diameter/thickness + length/pieces
+  // into the sale qty. No effect on stock/pricing math.
+  weightCalc     WeightCalc @default(NONE)
+  diameterMm     Decimal? @db.Decimal(10, 3)  // ROD nominal diameter (e.g. 12 for 12mm sariya)
+  thicknessMm    Decimal? @db.Decimal(10, 3)  // SHEET thickness / plate gauge
+  sheetWidthFt   Decimal? @db.Decimal(10, 3)  // SHEET width in feet (length is entered per sale)
+  pieceLengthFt  Decimal? @db.Decimal(10, 3)  // standard length of one rod/sheet in feet (e.g. 40)
+  densityKgM3    Decimal? @db.Decimal(10, 2)  // material density; null → steel 7850
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  images         ProductImage[]
+  saleItems      SaleItem[]
+  purchaseItems  PurchaseItem[]
+  stockMoves     StockMovement[]
+  adjustmentItems StockAdjustmentItem[]
+  comboItems     ComboItem[] @relation("ComboParent")     // components of THIS combo
+  usedInCombos   ComboItem[] @relation("ComboComponent")  // combos that include this product
+  bookingItems   BookingItem[]
+  estimatorItems EstimatorItem[]
+  priceOverrides PriceGroupItem[]
+  rateContractItems RateContractItem[]
+  cutSources     CuttingJob[]    @relation("CutSource")  // C6 — bars cut FROM this product
+  cutOutputs     CuttingOutput[] @relation("CutOutput")  // C6 — pieces/offcuts cut INTO this product
+  priceHistory   PriceHistory[]       // D1 — cost/sale price change log
+  poItems        PurchaseOrderItem[]  // D5 — purchase-order lines
+
+  @@index([name])
+  @@index([categoryId])
+  @@index([brandId])
+}
+
+// A component line of a COMBO product. Selling the combo deducts each
+// component's stock at its snapshot cost (Phase 2 sale logic).
+model ComboItem {
+  id                 String  @id @default(cuid())
+  comboProductId     String
+  comboProduct       Product @relation("ComboParent", fields: [comboProductId], references: [id], onDelete: Cascade)
+  componentProductId String
+  componentProduct   Product @relation("ComboComponent", fields: [componentProductId], references: [id])
+  qty                Decimal @db.Decimal(18, 3)
+
+  @@unique([comboProductId, componentProductId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  path      String              // /uploads/products/xxx.webp
+  thumbPath String?
+  isPrimary Boolean @default(false)
+  sortOrder Int     @default(0)
+}
+
+// ─────────────────────────── PARTIES ───────────────────────────
+
+model Customer {
+  id             String   @id @default(cuid())
+  code           String   @unique          // CUS-0001
+  name           String
+  phone          String?
+  address        String?
+  taxNumber      String?                    // CNIC / NTN
+  openingBalance Decimal  @default(0) @db.Decimal(18, 2)
+  balance        Decimal  @default(0) @db.Decimal(18, 2) // +ve = customer owes us (receivable)
+  creditLimit    Decimal  @default(0) @db.Decimal(18, 2)
+  priceGroupId   String?                    // F6 — Retail/Contractor/Dealer pricing tier
+  priceGroup     PriceGroup? @relation(fields: [priceGroupId], references: [id], onDelete: SetNull)
+  reminderTier   Int      @default(0)       // E4 — highest udhaar-reminder tier already sent (0 = none)
+  lastReminderAt DateTime?                  // E4 — when the last reminder went out (cooldown guard)
+  email          String?                    // E1 — for auto-emailed statements
+  loyaltyPoints  Int      @default(0)       // G4 — running loyalty points balance
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  sales    Sale[]
+  payments Payment[]
+  cheques  Cheque[]
+  bookings Booking[]
+  promises PaymentPromise[]
+  rateContracts RateContract[]
+  sites    CustomerSite[]
+  deliveryTrips DeliveryTrip[]
+  loyaltyEntries LoyaltyEntry[]
+
+  @@index([name])
+  @@index([phone])
+  @@index([priceGroupId])
+}
+
+// ─────────────────────────── LOYALTY (G4) ───────────────────────────
+// Points are a marketing memo, NOT a booked liability: earning adds points (no
+// accounting effect); redeeming spends points as a normal bill discount (which already
+// flows through the sale totals). So the balance sheet is untouched by loyalty.
+enum LoyaltyType {
+  EARN
+  REDEEM
+}
+
+model LoyaltyEntry {
+  id         String      @id @default(cuid())
+  customerId String
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type       LoyaltyType
+  points     Int         // +earned / -redeemed (stored as a positive magnitude with type)
+  saleId     String?
+  note       String?
+  createdAt  DateTime    @default(now())
+
+  @@index([customerId, createdAt])
+}
+
+// ─────────────────────────── CUSTOMER SITES (C4) ───────────────────────────
+// A contractor buys for several sites/projects. Each sale and each receipt can be tagged
+// with a site so the shop tracks udhaar PER site. Site balances are DERIVED (the same
+// customer-ledger math, filtered by site tag) — there is NO cached per-site balance and
+// NO new invariant: Σ(site balances) + an "unassigned" residual always equals the
+// customer's single balance by construction, so integrity is untouched.
+model CustomerSite {
+  id         String    @id @default(cuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name       String                            // "DHA Phase 5 – House 12"
+  address    String?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  sales      Sale[]
+  payments   Payment[]
+
+  @@index([customerId])
+}
+
+// ─────────────────────────── PRICE GROUPS (F6) ───────────────────────────
+// Customer pricing tiers (Retail / Contractor / Dealer / custom). A group applies a
+// blanket % off the list sale price, plus optional per-product absolute overrides. The
+// POS auto-applies the assigned customer's group price. Pricing only pre-fills the POS —
+// the sale still stores the posted unitPrice snapshot, so past bills never change.
+model PriceGroup {
+  id              String           @id @default(cuid())
+  name            String           @unique // Retail, Contractor, Dealer
+  discountPercent Decimal          @default(0) @db.Decimal(5, 2) // blanket % off list price
+  sortOrder       Int              @default(0)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+
+  items     PriceGroupItem[]
+  customers Customer[]
+}
+
+model PriceGroupItem {
+  id           String     @id @default(cuid())
+  priceGroupId String
+  priceGroup   PriceGroup @relation(fields: [priceGroupId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  price        Decimal    @db.Decimal(18, 2) // absolute override price for this product in this group
+
+  @@unique([priceGroupId, productId])
+}
+
+// ─────────────────────────── RATE CONTRACTS (C3) ───────────────────────────
+// A contractor negotiates fixed per-item rates that hold for a date range (e.g. "12mm
+// sariya at ₨290/kg, Jan–Mar"). When that customer is on the POS, their contract rate
+// auto-fills the sale line for the covered products, overriding the list price. Like
+// price groups this ONLY pre-fills the POS — the sale still stores the posted unitPrice
+// snapshot, so expiring or editing a contract never changes past bills.
+model RateContract {
+  id         String             @id @default(cuid())
+  refNo      String             @unique // RC-0001
+  customerId String
+  customer   Customer           @relation(fields: [customerId], references: [id])
+  name       String                             // "Q1 2026 rates"
+  validFrom  DateTime
+  validUntil DateTime
+  isActive   Boolean            @default(true)
+  notes      String?
+  createdAt  DateTime           @default(now())
+  items      RateContractItem[]
+
+  @@index([customerId])
+  @@index([validFrom, validUntil])
+}
+
+model RateContractItem {
+  id         String       @id @default(cuid())
+  contractId String
+  contract   RateContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product      @relation(fields: [productId], references: [id])
+  price      Decimal      @db.Decimal(18, 2) // agreed unit rate for this product
+
+  @@unique([contractId, productId])
+}
+
+model Vendor {
+  id             String   @id @default(cuid())
+  code           String   @unique          // VEN-0001
+  name           String
+  phone          String?
+  address        String?
+  taxNumber      String?
+  bankDetails    String?
+  openingBalance Decimal  @default(0) @db.Decimal(18, 2)
+  balance        Decimal  @default(0) @db.Decimal(18, 2) // +ve = we owe vendor (payable)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  purchases Purchase[]
+  payments  Payment[]
+  cheques   Cheque[]
+  notes          VendorNote[]     // D4 — debit/credit notes
+  purchaseOrders PurchaseOrder[]  // D5 — purchase orders
+
+  @@index([name])
+}
+
+// ─────────────────────────── PURCHASING ───────────────────────────
+
+enum PurchaseStatus {
+  DRAFT
+  RECEIVED
+  RETURNED
+  CANCELLED
+}
+
+model Purchase {
+  id           String         @id @default(cuid())
+  invoiceNo    String         @unique       // PUR-000123 (auto)
+  vendorId     String
+  vendor       Vendor         @relation(fields: [vendorId], references: [id])
+  userId       String
+  user         User           @relation(fields: [userId], references: [id])
+  refInvoiceNo String?                       // vendor's own bill number
+  date         DateTime       @default(now())
+  status       PurchaseStatus @default(RECEIVED)
+  subTotal     Decimal        @default(0) @db.Decimal(18, 2)
+  discount     Decimal        @default(0) @db.Decimal(18, 2)
+  tax          Decimal        @default(0) @db.Decimal(18, 2)
+  otherCharges Decimal        @default(0) @db.Decimal(18, 2) // freight/loading
+  // C2 — how otherCharges was spread onto item cost: NONE (expensed, old behaviour),
+  // VALUE (by line value) or QTY (by quantity). When not NONE, each item's landedUnitCost
+  // carries its freight share so inventory/COGS reflect the true landed cost.
+  landedBasis  String         @default("NONE")
+  currency     String         @default("PKR")  // H4 — bill currency (books always store PKR)
+  fxRate       Decimal        @default(1) @db.Decimal(18, 6) // H4 — 1 foreign unit = fxRate PKR
+  grandTotal   Decimal        @default(0) @db.Decimal(18, 2)
+  paidAmount   Decimal        @default(0) @db.Decimal(18, 2)
+  dueAmount    Decimal        @default(0) @db.Decimal(18, 2)
+  notes        String?
+  isReturn     Boolean        @default(false) // purchase return document
+  returnOfId   String?                         // original purchase if return
+  purchaseOrderId String?                      // D5 — the PO this receipt was booked against
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  createdAt    DateTime       @default(now())
+
+  items        PurchaseItem[]
+  payments     Payment[]
+
+  @@index([date])
+  @@index([vendorId])
+}
+
+model PurchaseItem {
+  id             String   @id @default(cuid())
+  purchaseId     String
+  purchase       Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  qty            Decimal  @db.Decimal(18, 3)
+  unitCost       Decimal  @db.Decimal(18, 2)                 // billed unit cost (matches the vendor invoice line)
+  landedUnitCost Decimal? @db.Decimal(18, 2)                 // C2 — unitCost + allocated freight share; the cost capitalised into stock. Null = same as unitCost.
+  discount       Decimal  @default(0) @db.Decimal(18, 2)
+  total          Decimal  @db.Decimal(18, 2)
+}
+
+// ─────────────────────────── D1 · PRICE HISTORY ───────────────────────────
+// A row is appended whenever a product's cost or sale price changes (on create,
+// on manual edit, and on each purchase's weighted-avg cost update). Read-only —
+// feeds the cost/price trend report. No effect on the ledgers or balance sheet.
+model PriceHistory {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  costPrice Decimal  @db.Decimal(18, 2)
+  salePrice Decimal  @db.Decimal(18, 2)
+  source    String   // "CREATE" | "UPDATE" | "PURCHASE"
+  note      String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+// ─────────────────────────── D4 · VENDOR DEBIT/CREDIT NOTES ───────────────────────────
+// A formal adjustment to a vendor's balance NOT tied to a purchase or a cash payment
+// (rate correction, allowance, goods returned without a stock document). CREDIT lowers
+// what we owe (income); DEBIT raises it (cost). The counterpart flows to retained
+// earnings so the balance sheet stays exact; the vendor-reconciliation check includes it.
+enum VendorNoteType {
+  CREDIT // vendor credits us → payable DOWN (other income)
+  DEBIT  // we owe more       → payable UP   (extra cost)
+}
+
+model VendorNote {
+  id        String         @id @default(cuid())
+  refNo     String         @unique // VDN-000001
+  vendorId  String
+  vendor    Vendor         @relation(fields: [vendorId], references: [id])
+  type      VendorNoteType
+  amount    Decimal        @db.Decimal(18, 2)
+  reason    String
+  date      DateTime       @default(now())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  createdAt DateTime       @default(now())
+
+  @@index([vendorId])
+}
+
+// ─────────────────────────── D5 · PURCHASE ORDERS → GRN ───────────────────────────
+// A PO is a NON-financial planning document (no stock, no money). Receiving against it
+// creates a normal Purchase (RECEIVED) for the received qty — reusing the proven
+// purchase posting (stock in + weighted-avg + vendor payable) — and advances the PO's
+// received quantities. Partial receipts supported. The PO itself posts nothing.
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  RECEIVED
+  CLOSED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id           String              @id @default(cuid())
+  poNo         String              @unique // PO-000001
+  vendorId     String
+  vendor       Vendor              @relation(fields: [vendorId], references: [id])
+  userId       String
+  user         User                @relation(fields: [userId], references: [id])
+  date         DateTime            @default(now())
+  expectedDate DateTime?
+  status       PurchaseOrderStatus @default(DRAFT)
+  notes        String?
+  items        PurchaseOrderItem[]
+  purchases    Purchase[]
+  createdAt    DateTime            @default(now())
+
+  @@index([vendorId])
+}
+
+model PurchaseOrderItem {
+  id          String        @id @default(cuid())
+  poId        String
+  po          PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product       @relation(fields: [productId], references: [id])
+  qty         Decimal       @db.Decimal(18, 3) // ordered
+  qtyReceived Decimal       @default(0) @db.Decimal(18, 3)
+  unitCost    Decimal       @db.Decimal(18, 2) // agreed/expected cost
+}
+
+// ─────────────────────────── SALES / POS ───────────────────────────
+
+enum SaleStatus {
+  DRAFT       // held bill
+  COMPLETED
+  RETURNED
+  CANCELLED
+  QUOTATION
+}
+
+model Sale {
+  id          String     @id @default(cuid())
+  invoiceNo   String     @unique             // INV-000456 (auto)
+  customerId  String?                         // null = walk-in customer
+  customer    Customer?  @relation(fields: [customerId], references: [id])
+  userId      String                          // cashier
+  user        User       @relation(fields: [userId], references: [id])
+  date        DateTime   @default(now())
+  status      SaleStatus @default(COMPLETED)
+  subTotal    Decimal    @default(0) @db.Decimal(18, 2)
+  discount    Decimal    @default(0) @db.Decimal(18, 2)   // bill-level discount
+  tax         Decimal    @default(0) @db.Decimal(18, 2)
+  otherCharges Decimal   @default(0) @db.Decimal(18, 2)   // delivery/loading
+  roundOff    Decimal    @default(0) @db.Decimal(18, 2)   // A5 — nearest-N rounding adjustment (in grandTotal)
+  grandTotal  Decimal    @default(0) @db.Decimal(18, 2)
+  paidAmount  Decimal    @default(0) @db.Decimal(18, 2)
+  dueAmount   Decimal    @default(0) @db.Decimal(18, 2)   // credit (udhaar)
+  totalCost   Decimal    @default(0) @db.Decimal(18, 2)   // COGS snapshot → instant profit
+  profit      Decimal    @default(0) @db.Decimal(18, 2)   // grandTotal - totalCost
+  notes       String?
+  isReturn    Boolean    @default(false)
+  returnOfId  String?                                      // original sale if return
+  bookingId   String?                                      // set when this invoice fulfils an advance booking (F3)
+  booking     Booking?   @relation(fields: [bookingId], references: [id])
+  clientRef   String?    @unique                            // H7 — offline-POS idempotency key (dedupe re-synced sales)
+  siteId      String?                                      // C4 — which customer site/project this invoice is for
+  site        CustomerSite? @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+
+  items         SaleItem[]
+  payments      Payment[]
+  deliveryNotes DeliveryNote[]
+
+  @@index([date])
+  @@index([customerId])
+  @@index([status])
+  @@index([bookingId])
+  @@index([siteId])
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  qty       Decimal @db.Decimal(18, 3)
+  unitPrice Decimal @db.Decimal(18, 2)
+  unitCost  Decimal @db.Decimal(18, 2)   // cost snapshot at time of sale
+  discount  Decimal @default(0) @db.Decimal(18, 2)
+  taxAmount Decimal @default(0) @db.Decimal(18, 2)
+  total     Decimal @db.Decimal(18, 2)
+  backordered Boolean @default(false)  // D2 — line sold while stock was insufficient (negative-stock allowed)
+
+  deliveries DeliveryNoteItem[]
+}
+
+// ─────────────────────────── PAYMENTS & MONEY ───────────────────────────
+
+enum PaymentType {
+  SALE_RECEIPT       // money in from a sale (at POS)
+  CUSTOMER_RECEIPT   // money in against customer balance
+  PURCHASE_PAYMENT   // money out for a purchase
+  VENDOR_PAYMENT     // money out against vendor balance
+  EXPENSE            // money out - expense
+  REFUND_OUT         // refund to customer
+  REFUND_IN          // refund from vendor
+  EMPLOYEE_ADVANCE   // money out - salary advance to staff (a receivable, NOT an expense)
+}
+
+// A money account (G1). Cash drawer, bank accounts, JazzCash/EasyPaisa wallets, card.
+// currentBalance is a CACHE — the AccountEntry ledger is the source of truth (every
+// Payment/Transfer/Capital movement appends an entry in the same transaction).
+model PaymentMethod {
+  id             String         @id @default(cuid())
+  name           String         @unique   // Cash, Meezan Bank, JazzCash, EasyPaisa, Card
+  isCash         Boolean        @default(false)
+  isActive       Boolean        @default(true)
+  accountNo      String?                   // bank account / wallet number
+  bankName       String?                   // Meezan, HBL…
+  openingBalance Decimal        @default(0) @db.Decimal(18, 2)
+  currentBalance Decimal        @default(0) @db.Decimal(18, 2) // cached = openingBalance + Σ entries
+  sortOrder      Int            @default(0)
+  payments       Payment[]
+  entries        AccountEntry[]
+  transfersOut   FundTransfer[] @relation("TransferFrom")
+  transfersIn    FundTransfer[] @relation("TransferTo")
+  capitalEntries CapitalEntry[]
+  employeeAdvances EmployeeAdvance[]
+  recurringExpenses RecurringExpense[]
+}
+
+// How an account balance moved. Source of truth for PaymentMethod.currentBalance.
+enum AccountEntryType {
+  PAYMENT      // linked to a Payment (sale/purchase/receipt/vendor/expense/refund)
+  TRANSFER_IN
+  TRANSFER_OUT
+  CAPITAL_IN   // owner deposited capital
+  DRAWING      // owner withdrew (not an expense — hits equity)
+  OPENING      // opening balance seed
+}
+
+// Per-account money ledger. `amount` is SIGNED (+in / −out); `balance` is the
+// running total after this entry. currentBalance cache == last balance.
+model AccountEntry {
+  id        String           @id @default(cuid())
+  accountId String
+  account   PaymentMethod    @relation(fields: [accountId], references: [id])
+  type      AccountEntryType
+  amount    Decimal          @db.Decimal(18, 2)  // signed
+  balance   Decimal          @db.Decimal(18, 2)  // running balance after this entry
+  refType   String?                              // "Payment" | "FundTransfer" | "CapitalEntry"
+  refId     String?
+  date      DateTime         @default(now())
+  notes     String?
+  reconciledAt DateTime?                          // H6 — marked when matched to a bank statement line (memo only)
+  createdAt DateTime         @default(now())
+
+  @@index([accountId, date])
+}
+
+// Money moved between two accounts (e.g. cash drawer → bank deposit). Creates a
+// paired TRANSFER_OUT + TRANSFER_IN in the same transaction. No P&L effect.
+model FundTransfer {
+  id            String        @id @default(cuid())
+  refNo         String        @unique   // TRN-000001
+  fromAccountId String
+  fromAccount   PaymentMethod @relation("TransferFrom", fields: [fromAccountId], references: [id])
+  toAccountId   String
+  toAccount     PaymentMethod @relation("TransferTo", fields: [toAccountId], references: [id])
+  amount        Decimal       @db.Decimal(18, 2)
+  date          DateTime      @default(now())
+  notes         String?
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([date])
+}
+
+// Owner capital in / drawings out. Affects the Balance Sheet (equity), NOT P&L.
+enum CapitalDirection {
+  CAPITAL_IN
+  DRAWING
+}
+
+model CapitalEntry {
+  id        String           @id @default(cuid())
+  refNo     String           @unique   // CAP-000001 / DRW-000001
+  direction CapitalDirection
+  accountId String
+  account   PaymentMethod    @relation(fields: [accountId], references: [id])
+  amount    Decimal          @db.Decimal(18, 2)
+  date      DateTime         @default(now())
+  notes     String?
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  createdAt DateTime         @default(now())
+
+  @@index([date])
+}
+
+model Payment {
+  id         String        @id @default(cuid())
+  refNo      String        @unique            // PAY-000789 (auto)
+  type       PaymentType
+  methodId   String
+  method     PaymentMethod @relation(fields: [methodId], references: [id])
+  amount     Decimal       @db.Decimal(18, 2)
+  date       DateTime      @default(now())
+  customerId String?
+  customer   Customer?     @relation(fields: [customerId], references: [id])
+  vendorId   String?
+  vendor     Vendor?       @relation(fields: [vendorId], references: [id])
+  saleId     String?
+  sale       Sale?         @relation(fields: [saleId], references: [id])
+  purchaseId String?
+  purchase   Purchase?     @relation(fields: [purchaseId], references: [id])
+  expenseId  String?       @unique
+  expense    Expense?      @relation(fields: [expenseId], references: [id])
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  siteId     String?                              // C4 — customer site this receipt/refund is allocated to
+  site       CustomerSite? @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  notes      String?
+  createdAt  DateTime      @default(now())
+
+  employeeAdvance EmployeeAdvance? // set when this money-out is a staff advance (F5)
+
+  @@index([date])
+  @@index([type])
+  @@index([siteId])
+}
+
+// ─────────────────────────── CHEQUES (F1) ───────────────────────────
+// Post-dated cheque tracking. A RECEIVED cheque settles the customer's udhaar and
+// sits in a "Cheques in Hand" holding account (an asset) until it CLEARS into a bank
+// account; a BOUNCE cleanly reverses the receipt (customer owes again). ISSUED cheques
+// mirror this against a post-dated-cheques holding account for vendors.
+enum ChequeDirection {
+  RECEIVED // customer gave us a cheque
+  ISSUED   // we gave a vendor a cheque
+}
+
+enum ChequeStatus {
+  PENDING   // not yet cleared — money is promised, not real cash
+  CLEARED   // cleared into/out of a bank account
+  BOUNCED   // returned unpaid — receipt reversed
+  CANCELLED // torn up / replaced before clearing
+}
+
+model Cheque {
+  id               String          @id @default(cuid())
+  refNo            String          @unique // CHQ-000001
+  direction        ChequeDirection
+  customerId       String?
+  customer         Customer?       @relation(fields: [customerId], references: [id])
+  vendorId         String?
+  vendor           Vendor?         @relation(fields: [vendorId], references: [id])
+  bankName         String // the drawer's bank printed on the cheque
+  chequeNo         String
+  amount           Decimal         @db.Decimal(18, 2)
+  chequeDate       DateTime // the date written on the cheque (when it can be banked)
+  status           ChequeStatus    @default(PENDING)
+  holdingAccountId String // "Cheques in Hand" (received) / "Post-dated Cheques" (issued) — where it sits while PENDING
+  settledAccountId String? // the real bank account it cleared into/out of
+  receiptPaymentId String? // the Payment created on receive/issue (used to reverse on bounce)
+  clearedAt        DateTime?
+  notes            String?
+  userId           String
+  user             User            @relation(fields: [userId], references: [id])
+  createdAt        DateTime        @default(now())
+
+  @@index([status])
+  @@index([chequeDate])
+}
+
+// ─────────────────────────── DELIVERY CHALLANS (F2) ───────────────────────────
+// A dispatch note against a sale. Materials ship by truck in partial loads, so one
+// invoice can have several challans. Stock already moved at invoice time, so a challan
+// carries NO money/stock effect — it only records what physically went out, and the
+// invoice shows Delivered/Pending from the sum of its challans.
+enum DeliveryStatus {
+  DELIVERED
+  CANCELLED
+}
+
+model DeliveryNote {
+  id           String             @id @default(cuid())
+  refNo        String             @unique // CHL-000001
+  saleId       String
+  sale         Sale               @relation(fields: [saleId], references: [id])
+  date         DateTime           @default(now())
+  driverName   String?
+  vehicleNo    String?
+  receiverName String?
+  notes        String?
+  status       DeliveryStatus     @default(DELIVERED)
+  tripId       String?                                // C5 — the delivery trip this challan went on
+  trip         DeliveryTrip?      @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  userId       String
+  user         User               @relation(fields: [userId], references: [id])
+  createdAt    DateTime           @default(now())
+
+  items DeliveryNoteItem[]
+
+  @@index([saleId])
+  @@index([date])
+  @@index([tripId])
+}
+
+// ─────────────────────────── DELIVERY TRIPS (C5) ───────────────────────────
+// A vehicle run: driver + vehicle deliver one or more challans. `freightPaid` is the cost
+// paid to the transporter/driver — it optionally posts a real Expense (money out + P&L),
+// reversed if the trip is deleted. `freightCharged` is what was recovered from the
+// customer(s); it is RECORD-ONLY (the real recovery already sits on the sale invoices as
+// otherCharges, so re-posting it would double-count) and drives the delivery-margin view.
+model DeliveryTrip {
+  id             String         @id @default(cuid())
+  refNo          String         @unique // TRP-0001
+  date           DateTime       @default(now())
+  vehicleNo      String?
+  driverName     String?
+  driverPhone    String?
+  customerId     String?                              // optional — a trip for one customer
+  customer       Customer?      @relation(fields: [customerId], references: [id])
+  freightCharged Decimal        @default(0) @db.Decimal(18, 2) // recovered from customer(s) — record only
+  freightPaid    Decimal        @default(0) @db.Decimal(18, 2) // paid to transporter/driver (posts an Expense if an account is chosen)
+  expenseId      String?        @unique                        // the Expense created for freightPaid (reversed on delete)
+  expense        Expense?       @relation(fields: [expenseId], references: [id])
+  notes          String?
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  createdAt      DateTime       @default(now())
+
+  challans       DeliveryNote[]
+
+  @@index([date])
+  @@index([customerId])
+}
+
+model DeliveryNoteItem {
+  id             String       @id @default(cuid())
+  deliveryNoteId String
+  deliveryNote   DeliveryNote @relation(fields: [deliveryNoteId], references: [id], onDelete: Cascade)
+  saleItemId     String
+  saleItem       SaleItem     @relation(fields: [saleItemId], references: [id])
+  qty            Decimal      @db.Decimal(18, 3)
+}
+
+// ─────────────────────────── ADVANCE BOOKINGS (F3) ───────────────────────────
+// A customer books goods at TODAY's price (rate lock) with an advance, and takes
+// delivery over the coming weeks. Accounting rule: the advance is a LIABILITY, not
+// revenue — receiving it is a CUSTOMER_RECEIPT that pushes the customer's balance
+// negative (a credit / advance held, already a liability line on the balance sheet).
+// Revenue is recognised ONLY when a booking is fulfilled: that generates a real Sale
+// (invoice) at the LOCKED unitPrice, the receivable nets against the held advance in
+// the customer's single running balance. Cancelling can refund the unused advance.
+enum BookingStatus {
+  OPEN      // agreed, nothing delivered yet
+  PARTIAL   // some quantity delivered
+  COMPLETED // every line fully delivered
+  CANCELLED // called off (unused advance optionally refunded)
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  refNo           String        @unique // BKG-000001
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  date            DateTime      @default(now())
+  validUntil      DateTime? // rate-lock expiry (informational)
+  status          BookingStatus @default(OPEN)
+  bookedValue     Decimal       @default(0) @db.Decimal(18, 2) // Σ qty × lockedPrice at creation
+  advanceReceived Decimal       @default(0) @db.Decimal(18, 2) // money taken as advance (liability)
+  notes           String?
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  items BookingItem[]
+  sales Sale[] // invoices generated by fulfilling this booking
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model BookingItem {
+  id           String  @id @default(cuid())
+  bookingId    String
+  booking      Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  qty          Decimal @db.Decimal(18, 3) // booked quantity
+  unitPrice    Decimal @db.Decimal(18, 2) // LOCKED rate — never changes if prices move
+  qtyFulfilled Decimal @default(0) @db.Decimal(18, 3) // delivered/invoiced so far
+}
+
+// ─────────────────────── CONSTRUCTION ESTIMATOR (F4) ───────────────────────
+// The "sales weapon": a walk-in says "I'm building X" and the shop instantly gets a
+// materials list with live prices, one click away from a quotation. A template is a
+// structure type (RCC slab, brick wall, grey-structure per marla…) holding engineering
+// coefficients that map to REAL catalog products. Estimate = coefficient × (area × floors)
+// × the product's current sale price. No money/stock effect — it only reads prices; the
+// quotation it produces is a normal QUOTATION Sale (snapshots only). Coefficients are
+// editable by admins because rates differ by region/engineer.
+model EstimatorTemplate {
+  id               String          @id @default(cuid())
+  name             String          @unique // "RCC Slab (6\")", "Grey structure / marla"
+  description      String?
+  areaLabel        String          @default("Area (sq ft)") // what the area input means
+  multiplyByFloors Boolean         @default(true) // total units = area × floors (else just area)
+  sortOrder        Int             @default(0)
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  items            EstimatorItem[]
+}
+
+model EstimatorItem {
+  id         String            @id @default(cuid())
+  templateId String
+  template   EstimatorTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product           @relation(fields: [productId], references: [id])
+  qtyPerUnit Decimal           @db.Decimal(18, 4) // qty of this product per 1 unit of (area × floors)
+  note       String? // e.g. "12mm steel", "for 6\" slab"
+  sortOrder  Int               @default(0)
+}
+
+model ExpenseCategory {
+  id        String             @id @default(cuid())
+  name      String             @unique   // Rent, Salaries, Electricity, Transport, Tea/Misc
+  expenses  Expense[]
+  recurring RecurringExpense[]
+}
+
+model Expense {
+  id          String            @id @default(cuid())
+  refNo       String            @unique          // EXP-000012
+  categoryId  String
+  category    ExpenseCategory   @relation(fields: [categoryId], references: [id])
+  amount      Decimal           @db.Decimal(18, 2)
+  date        DateTime          @default(now())
+  notes       String?
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  payment     Payment?
+  recurringId String?                            // set when auto-posted from a recurring rule
+  recurring   RecurringExpense? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
+  deliveryTrip DeliveryTrip?                     // set when this expense is a trip's freight-paid (C5)
+  createdAt   DateTime          @default(now())
+
+  @@index([date])
+}
+
+// A1 — Recurring expense rule. A daily sweep auto-creates a real Expense (money out +
+// P&L hit, via the same postPayment path) once each month on/after `dayOfMonth`.
+// `lastPostedPeriod` ("YYYY-MM") dedupes so re-running the sweep in a month is safe.
+model RecurringExpense {
+  id               String          @id @default(cuid())
+  categoryId       String
+  category         ExpenseCategory @relation(fields: [categoryId], references: [id])
+  methodId         String
+  method           PaymentMethod   @relation(fields: [methodId], references: [id])
+  amount           Decimal         @db.Decimal(18, 2)
+  dayOfMonth       Int             @default(1)   // 1..28 — day of month to auto-post
+  notes            String?
+  isActive         Boolean         @default(true)
+  lastPostedPeriod String?                        // "YYYY-MM" already posted (dedupe guard)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  generated        Expense[]                      // expenses this rule created
+
+  @@index([isActive])
+}
+
+// ─────────────────────────── STOCK LEDGER ───────────────────────────
+
+enum StockMoveType {
+  PURCHASE
+  PURCHASE_RETURN
+  SALE
+  SALE_RETURN
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  DAMAGE
+  OPENING
+  CUT_OUT // C6 — full bar/length consumed by a cutting job
+  CUT_IN  // C6 — cut piece / offcut produced back into stock by a cutting job
+}
+
+// Source of truth for stock. Product.stockQty is a cached sum.
+model StockMovement {
+  id        String        @id @default(cuid())
+  productId String
+  product   Product       @relation(fields: [productId], references: [id])
+  type      StockMoveType
+  qty       Decimal       @db.Decimal(18, 3)  // +in / -out
+  unitCost  Decimal?      @db.Decimal(18, 2)
+  refType   String?                            // "SALE" | "PURCHASE" | "ADJUSTMENT"
+  refId     String?                            // id of the sale/purchase/adjustment
+  balance   Decimal       @db.Decimal(18, 3)   // running stock after this move
+  date      DateTime      @default(now())
+  notes     String?
+
+  @@index([productId, date])
+}
+
+// A2 — structured reason for a stock adjustment (for the shrinkage/write-off report).
+enum AdjustmentReason {
+  COUNT_CORRECTION // physical count fix (neutral)
+  BREAKAGE         // broken / damaged
+  THEFT            // stolen / shrinkage
+  SAMPLE           // given as sample / giveaway
+  WASTAGE          // spoiled / cutting waste
+  EXPIRY           // expired
+  FOUND            // found extra stock (neutral, inward)
+  OTHER
+}
+
+model StockAdjustment {
+  id         String                @id @default(cuid())
+  refNo      String                @unique      // ADJ-000005
+  reasonCode AdjustmentReason      @default(COUNT_CORRECTION) // A2 categorised reason
+  reason     String                              // free-text detail (label when blank)
+  date       DateTime              @default(now())
+  userId     String
+  user       User                  @relation(fields: [userId], references: [id])
+  items      StockAdjustmentItem[]
+  createdAt  DateTime              @default(now())
+
+  @@index([reasonCode])
+}
+
+model StockAdjustmentItem {
+  id           String          @id @default(cuid())
+  adjustmentId String
+  adjustment   StockAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product         @relation(fields: [productId], references: [id])
+  qtyChange    Decimal         @db.Decimal(18, 3) // +5 or -3
+}
+
+// ─────────────────────────── CUTTING & OFFCUTS (C6) ───────────────────────────
+// Cut a full bar/pipe/sheet into the piece the customer needs + leftover offcuts.
+// A cutting job is a VALUE-CONSERVING stock conversion (no money moves): the source
+// stock leaves (CUT_OUT) and the produced pieces/offcuts come back in (CUT_IN) at a
+// cost split from the source by length/qty, so total inventory value is unchanged.
+// An optional wastage (saw kerf / unusable scrap) leaves as a DAMAGE move — a real,
+// recognised loss (P&L) — which is exactly the schema's WASTAGE reason. Because the
+// pieces re-enter stock at their allocated cost, a later sale carries the correct COGS
+// and the balance sheet stays exact (rounding absorbed by the existing revaluation term).
+
+enum CutOutputKind {
+  PIECE  // the usable cut length (typically sold next)
+  OFFCUT // leftover remnant returned to stock for later sale
+}
+
+model CuttingJob {
+  id              String   @id @default(cuid())
+  number          String   @unique                       // CUT-000001 (Counter)
+  date            DateTime @default(now())
+  sourceProductId String
+  sourceProduct   Product  @relation("CutSource", fields: [sourceProductId], references: [id])
+  sourceQty       Decimal  @db.Decimal(18, 3)            // full bars/length consumed
+  sourceUnitCost  Decimal  @db.Decimal(18, 2)            // weighted-avg cost snapshot at cut time
+  wastageQty      Decimal  @default(0) @db.Decimal(18, 3) // kerf/scrap (recognised as a DAMAGE loss)
+  totalCost       Decimal  @db.Decimal(18, 2)            // sourceQty × sourceUnitCost (record)
+  notes           String?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  outputs         CuttingOutput[]
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+}
+
+model CuttingOutput {
+  id        String        @id @default(cuid())
+  jobId     String
+  job       CuttingJob    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product       @relation("CutOutput", fields: [productId], references: [id])
+  kind      CutOutputKind @default(PIECE)
+  qty       Decimal       @db.Decimal(18, 3)
+  lengthFt  Decimal?      @db.Decimal(10, 2)  // optional per-unit length (used to split cost)
+  unitCost  Decimal       @db.Decimal(18, 2)  // allocated cost per output unit
+}
+
+
+// ─────────────────────────── EMPLOYEES & SALARIES ───────────────────────────
+
+model Employee {
+  id          String   @id @default(cuid())
+  code        String   @unique          // EMP-0001
+  name        String
+  phone       String?
+  cnic        String?                    // national ID
+  address     String?
+  designation String?                    // Salesman, Loader, Accountant, Driver...
+  photo       String?                    // /uploads/employees/xxx.webp
+  joinDate    DateTime @default(now())
+  baseSalary  Decimal  @default(0) @db.Decimal(18, 2)   // monthly
+  isActive    Boolean  @default(true)
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  shiftId      String?
+  shift        Shift?      @relation(fields: [shiftId], references: [id])
+
+  salaries      SalaryPayment[]
+  leaveRequests LeaveRequest[]
+  attendances   Attendance[]
+  advances      EmployeeAdvance[]
+}
+
+// ─────────────────────────── HR EXTENSIONS (G6, lightweight) ───────────────────────────
+
+model Department {
+  id        String     @id @default(cuid())
+  name      String     @unique          // Sales, Warehouse, Accounts, Delivery
+  createdAt DateTime   @default(now())
+  employees Employee[]
+}
+
+model Shift {
+  id        String     @id @default(cuid())
+  name      String     @unique          // Morning, Evening
+  startTime String                       // "09:00"
+  endTime   String                       // "18:00"
+  employees Employee[]
+}
+
+enum LeaveType {
+  PAID
+  UNPAID
+  SICK
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model LeaveRequest {
+  id         String      @id @default(cuid())
+  employeeId String
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  fromDate   DateTime
+  toDate     DateTime
+  days       Int         @default(1)
+  type       LeaveType   @default(UNPAID)
+  status     LeaveStatus @default(PENDING)
+  reason     String?
+  approverId String?
+  approver   User?       @relation("LeaveApprover", fields: [approverId], references: [id])
+  createdAt  DateTime    @default(now())
+
+  @@index([employeeId])
+}
+
+model Holiday {
+  id   String   @id @default(cuid())
+  date DateTime @unique
+  name String
+}
+
+// Paying a salary also creates an Expense (category "Salaries") in the same
+// transaction so P&L stays correct automatically.
+model SalaryPayment {
+  id              String   @id @default(cuid())
+  refNo           String   @unique            // SAL-000012
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  month           String                       // "2026-06" — the salary period
+  baseAmount      Decimal  @db.Decimal(18, 2)
+  bonus           Decimal  @default(0) @db.Decimal(18, 2)
+  deduction       Decimal  @default(0) @db.Decimal(18, 2)   // other/penalty deduction (reduces the wage expense)
+  absentDeduction Decimal  @default(0) @db.Decimal(18, 2)   // docked for absent/half days (reduces the wage expense)
+  advanceRecovered Decimal @default(0) @db.Decimal(18, 2)   // advances recovered — NOT an expense, only reduces cash paid
+  netPaid         Decimal  @db.Decimal(18, 2)                // base + bonus - deduction - absentDeduction - advanceRecovered (cash out)
+  date            DateTime @default(now())
+  notes           String?
+  userId          String                        // who paid
+  user            User     @relation(fields: [userId], references: [id])
+  expenseId       String?  @unique              // linked auto-created Expense row (amount = earned wage)
+  createdAt       DateTime @default(now())
+
+  advancesRecovered EmployeeAdvance[]           // advances cleared by this salary
+
+  @@unique([employeeId, month])            // one salary per employee per month
+  @@index([month])
+}
+
+// ─────────────────────── ATTENDANCE & STAFF ADVANCES (F5) ───────────────────────
+// Daily attendance drives the optional per-day salary deduction; advances are cash
+// given mid-month and recovered from salary. Attendance carries no money effect. An
+// advance is a RECEIVABLE (money out now, an asset) — never an expense — that is cleared
+// when a salary recovers it; the balance sheet shows open advances as an asset.
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+}
+
+model Attendance {
+  id         String           @id @default(cuid())
+  employeeId String
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime // normalised to midnight — one mark per employee per day
+  status     AttendanceStatus @default(PRESENT)
+  note       String?
+  createdAt  DateTime         @default(now())
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+model EmployeeAdvance {
+  id            String         @id @default(cuid())
+  refNo         String         @unique // ADV-000001
+  employeeId    String
+  employee      Employee       @relation(fields: [employeeId], references: [id])
+  amount        Decimal        @db.Decimal(18, 2)
+  date          DateTime       @default(now())
+  notes         String?
+  methodId      String // account the cash came out of
+  method        PaymentMethod  @relation(fields: [methodId], references: [id])
+  paymentId     String?        @unique // the EMPLOYEE_ADVANCE Payment (reversed if the advance is cancelled)
+  payment       Payment?       @relation(fields: [paymentId], references: [id])
+  recoveredInId String? // the SalaryPayment that recovered this advance (null = still open)
+  recoveredIn   SalaryPayment? @relation(fields: [recoveredInId], references: [id])
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  createdAt     DateTime       @default(now())
+
+  @@index([employeeId])
+  @@index([recoveredInId])
+}
+
+// ─────────────────────────── NOTIFICATIONS & MESSAGING ───────────────────────────
+
+enum NotificationType {
+  LOW_STOCK        // product fell below minStockLevel
+  DEBT_REMINDER    // customer receivable pending too long
+  PAYABLE_REMINDER // vendor payment due
+  CREDIT_LIMIT     // customer crossed credit limit
+  CHEQUE_DUE       // a pending cheque is due to clear on/before today
+  PROMISE_DUE      // a customer's promise-to-pay date has arrived, still unpaid (A4)
+  SYSTEM           // backups, errors, announcements
+}
+
+// In-app notification bell (generated by server-side checks / cron)
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  entity    String?           // "Product" | "Customer" | "Vendor"
+  entityId  String?
+  isRead    Boolean          @default(false)
+  userId    String?           // null = broadcast to all users
+  createdAt DateTime         @default(now())
+
+  @@index([isRead, createdAt])
+}
+
+// A4 — Promise-to-pay. A soft collections record: a customer said they'll pay ₨X by a
+// date. No money moves (the receivable already lives on their ledger); this only tracks
+// the commitment and raises a PROMISE_DUE bell when the date passes and it's still OPEN.
+enum PromiseStatus {
+  OPEN
+  KEPT
+  BROKEN
+  CANCELLED
+}
+
+model PaymentPromise {
+  id          String        @id @default(cuid())
+  customerId  String
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  amount      Decimal       @db.Decimal(18, 2)
+  promiseDate DateTime                                     // when they said they'll pay
+  note        String?
+  status      PromiseStatus @default(OPEN)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, promiseDate])
+}
+
+// B1+B2 — Day close / shift Z-report. Reconciles the physically-counted cash drawer
+// against the system's cash-account balance for a business day. Pure record + audit —
+// it posts NO accounting entries (the variance is a finding for the owner to act on),
+// so it never affects integrity.
+model DayClose {
+  id            String   @id @default(cuid())
+  refNo         String   @unique               // DCL-0001
+  businessDate  DateTime                        // the day being closed
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  openingFloat  Decimal  @default(0) @db.Decimal(18, 2) // cash carried in (informational)
+  expectedCash  Decimal  @default(0) @db.Decimal(18, 2) // system cash balance at close
+  countedCash   Decimal  @default(0) @db.Decimal(18, 2) // Σ denominations
+  variance      Decimal  @default(0) @db.Decimal(18, 2) // counted − expected (over/short)
+  cashIn        Decimal  @default(0) @db.Decimal(18, 2) // day's cash received (informational)
+  cashOut       Decimal  @default(0) @db.Decimal(18, 2) // day's cash paid out (informational)
+  denominations String?                         // JSON { "5000": 2, "1000": 5, ... }
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@index([businessDate])
+}
+
+enum MessageChannel {
+  WHATSAPP
+  EMAIL
+  SMS // E2 — local SMS gateway
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  FAILED
+  CLICKED    // for wa.me link mode: link was generated/opened
+}
+
+// Every WhatsApp/Email we send (sale receipts, purchase confirmations,
+// debt reminders, statements) is logged here for the audit trail.
+model MessageLog {
+  id        String         @id @default(cuid())
+  channel   MessageChannel
+  recipient String                         // phone or email
+  template  String                         // SALE_RECEIPT, PURCHASE_CONFIRM, DEBT_REMINDER, STATEMENT
+  refType   String?                        // "Sale" | "Purchase" | "Customer"
+  refId     String?
+  status    MessageStatus  @default(QUEUED)
+  error     String?
+  createdAt DateTime       @default(now())
+
+  @@index([createdAt])
+}
+
+// ─────────────────────────── SYSTEM ───────────────────────────
+
+model Setting {
+  key   String @id      // shop_name, shop_logo, address, phone, tax_percent, currency, invoice_footer, receipt_size
+  value String
+}
+
+// H2 — a saved report filter preset (per user). `params` is a JSON blob of the report
+// filter state (dates, basis, ids…). Pure UI convenience; no accounting effect.
+model SavedFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportKey String            // which report this preset belongs to
+  name      String            // user's label
+  params    String            // JSON string of the filter state
+  createdAt DateTime @default(now())
+
+  @@index([userId, reportKey])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String            // LOGIN, CREATE_SALE, DELETE_PRODUCT, UPDATE_SETTING...
+  entity    String?           // Sale, Product...
+  entityId  String?
+  details   String?           // JSON string of changes
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Counter {
+  key   String @id  // "sale", "purchase", "payment", "customer", "vendor", "expense", "adjustment", "sku", "employee", "salary", "transfer", "capital", "drawing", "cheque", "delivery", "booking", "advance"
+  value Int    @default(0)
+}

@@ -1,0 +1,57 @@
+# ─────────────── Dependencies ───────────────
+node_modules/
+
+# ─────────────── Build output ───────────────
+dist/
+build/
+*.tsbuildinfo
+.vite/
+.turbo/
+.cache/
+coverage/
+
+# ─────────────── Desktop (Electron) ───────────────
+apps/desktop/release/        # electron-builder output (installers, win-unpacked)
+apps/desktop/vendor/         # PostgreSQL runtime staged at build time
+release/
+
+# ─────────────── Distributables ───────────────
+# Installers / source zips ship via GitHub Releases or your store, not committed.
+deliverables/
+*.exe
+*.dmg
+*.AppImage
+*.zip
+*.7z
+
+# ─────────────── Secrets & runtime data ───────────────
+.env
+.env.*
+!.env.example
+apps/server/uploads/
+*.sql
+!apps/server/prisma/migrations/**/*.sql   # keep Prisma migrations tracked
+*.sql.gz
+*.dump
+
+# ─────────────── Logs ───────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─────────────── Editor / OS ───────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─────────────── Test / tooling scratch ───────────────
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# ─────────────── Local / private files (never committed) ───────────────
+/_internal/

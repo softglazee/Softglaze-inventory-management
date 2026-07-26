@@ -1,0 +1,16 @@
+# Local PostgreSQL for development:  docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: softglaze-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: softglaze
+      POSTGRES_PASSWORD: softglaze_dev
+      POSTGRES_DB: softglaze
+    ports:
+      - "5432:5432"
+    volumes:
+      - softglaze_pgdata:/var/lib/postgresql/data
+volumes:
+  softglaze_pgdata:
