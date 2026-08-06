@@ -18,7 +18,7 @@ One codebase, two targets:
 - 🌐 **Browser app** on your own server (access from anywhere)
 
 📚 **Full documentation:** online at
-**[softglaze.com/docs/stock-manager](https://softglaze.com/docs/stock-manager/)**, or open the
+**[softglaze.com/docs/stock-and-accounts-manager](https://softglaze.com/docs/stock-and-accounts-manager/)**, or open the
 offline copy [`docs/documentation.html`](docs/documentation.html) in any browser — it is a single
 self‑contained file with its screenshots embedded.
 

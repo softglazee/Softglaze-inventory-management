@@ -65,13 +65,13 @@ configuration, everyday use, backup, troubleshooting and the API.
 
 The newest version is always online at:
 
-    https://softglaze.com/docs/stock-manager/
+    https://softglaze.com/docs/stock-and-accounts-manager/
 
 ================================================================
  LINKS
 ================================================================
   Website          https://softglaze.com
-  Documentation    https://softglaze.com/docs/stock-manager/
+  Documentation    https://softglaze.com/docs/stock-and-accounts-manager/
 
 ================================================================
  LICENSE & SUPPORT
