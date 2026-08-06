@@ -1,14 +1,16 @@
 {
   "name": "softglaze",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Complete stock management + POS for building materials shop (desktop + web)",
   "workspaces": ["apps/server", "apps/web", "apps/desktop"],
   "scripts": {
     "dev": "concurrently -n api,web -c yellow,cyan \"npm run dev -w apps/server\" \"npm run dev -w apps/web\"",
     "dev:server": "npm run dev -w apps/server",
     "dev:web": "npm run dev -w apps/web",
-    "build": "npm run build -w apps/server && npm run build -w apps/web",
+    "check:hooks": "node scripts/check-hooks.cjs",
+    "docs:build": "node docs/build-docs.cjs",
+    "build": "npm run check:hooks && npm run build -w apps/server && npm run build -w apps/web",
     "db:migrate": "npm run db:migrate -w apps/server",
     "db:seed": "npm run db:seed -w apps/server",
     "db:studio": "npm run db:studio -w apps/server",

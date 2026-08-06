@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SoftGlaze Stock Manager — Documentation</title>
+<meta name="description" content="Complete documentation for SoftGlaze Stock Manager — installation (local, server, desktop), configuration, day-to-day usage, API reference and troubleshooting." />
+<link rel="canonical" href="https://softglaze.com/docs/stock-manager/" />
+<meta name="author" content="SoftGlaze" />
+<meta name="robots" content="index, follow" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="SoftGlaze" />
+<meta property="og:title" content="SoftGlaze Stock Manager — Documentation" />
+<meta property="og:description" content="Installation, configuration and usage guide for SoftGlaze Stock Manager — Inventory + Point of Sale for retail and wholesale shops." />
+<meta property="og:url" content="https://softglaze.com/docs/stock-manager/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SoftGlaze Stock Manager — Documentation" />
+<meta name="twitter:description" content="Installation, configuration and usage guide for SoftGlaze Stock Manager." />
+<style>
+  :root{
+    --accent:#ff9f43; --accent-2:#ff851a; --accent-soft:#fff3e6;
+    --navy:#092c4c; --navy-2:#123a5e;
+    --ink:#1f2733; --ink-2:#33404f; --muted:#5b6670; --faint:#8b95a1;
+    --line:#e7eaee; --line-2:#dfe4ea;
+    --bg:#f7f9fc; --card:#ffffff; --code-bg:#f3f5f8;
+    --ok:#2fa84f; --warn:#e6a100; --danger:#e0483a; --info:#2c7be5;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.05);
+    --sidebar-w:274px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  h1,h2,h3,h4{letter-spacing:-.02em;line-height:1.25}
+  code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  /* overflow-wrap:anywhere lets long connection strings and Windows paths break
+     instead of pushing the page into horizontal scroll on a phone */
+  code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.85em;color:#22303f;overflow-wrap:anywhere}
+  pre code{overflow-wrap:normal}
+  pre{background:#0f1a24;color:#e6edf3;border-radius:11px;padding:15px 17px;overflow-x:auto;font-size:13.2px;line-height:1.6;margin:12px 0}
+  pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+  pre .c{color:#7c8fa3}         /* comment */
+  pre .k{color:#ffb570}         /* command / keyword */
+  pre .s{color:#9fdfa4}         /* string */
+
+  /* ── icons ───────────────────────────────────────────────────────── */
+  .ico{width:17px;height:17px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:20px;height:20px}
+
+  /* ── layout ──────────────────────────────────────────────────────── */
+  .shell{display:flex;align-items:flex-start;max-width:1340px;margin:0 auto;gap:30px;padding:0 24px}
+  aside{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .brand{display:flex;align-items:center;gap:11px;padding:20px 8px 16px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+  .brand:hover{text-decoration:none}
+  .brand:hover b{color:var(--accent-2)}
+  .brand .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#ffb570,var(--accent));display:grid;place-items:center;color:#fff;box-shadow:0 4px 12px rgba(255,159,67,.35)}
+  .brand b{font-size:15.5px;display:block;line-height:1.2}
+  .brand span{font-size:11.5px;color:var(--muted)}
+  .navsearch{position:relative;padding:12px 8px 8px}
+  .navsearch input{width:100%;border:1px solid var(--line-2);background:#fff;border-radius:9px;padding:8px 11px 8px 32px;font:inherit;font-size:13.5px;color:var(--ink)}
+  .navsearch input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .navsearch svg{position:absolute;left:19px;top:50%;transform:translateY(-25%);color:var(--faint);width:15px;height:15px}
+  nav{flex:1;overflow-y:auto;padding:4px 8px 40px;scrollbar-width:thin}
+  nav::-webkit-scrollbar{width:7px}
+  nav::-webkit-scrollbar-thumb{background:#d8dee6;border-radius:8px}
+  .grouplabel{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#98a2ae;font-weight:800;padding:16px 10px 5px}
+  nav a{display:flex;align-items:center;gap:10px;color:var(--muted);padding:7px 10px;border-radius:9px;font-size:13.8px;font-weight:600;transition:background .12s,color .12s}
+  nav a:hover{background:#fff;color:var(--ink);text-decoration:none}
+  nav a.active{background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(255,159,67,.35)}
+  nav a.active .ico{color:#fff}
+  nav a .ico{color:var(--faint)}
+  nav a:hover .ico{color:var(--accent-2)}
+  nav a.hidden{display:none}
+
+  main{flex:1;min-width:0;padding:24px 0 100px}
+
+  /* ── hero ────────────────────────────────────────────────────────── */
+  .hero{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-radius:18px;padding:38px 38px 34px;margin-bottom:24px;position:relative;overflow:hidden}
+  .hero:after{content:"";position:absolute;right:-70px;top:-70px;width:260px;height:260px;border-radius:50%;background:rgba(255,159,67,.14)}
+  .hero .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,159,67,.2);color:#ffd9b0;border:1px solid rgba(255,159,67,.42);border-radius:999px;padding:4px 13px;font-size:12.5px;font-weight:800;margin-bottom:14px}
+  .hero h1{margin:0 0 8px;font-size:33px}
+  .hero p{margin:0;color:#cfe0ee;max-width:66ch;position:relative}
+  .herometa{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px;position:relative}
+  .herometa span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:5px 11px;font-size:12.5px;font-weight:700;color:#e8f1f8}
+  .herolinks{display:flex;flex-wrap:wrap;gap:16px;margin-top:18px;position:relative}
+  .herolinks a{display:inline-flex;align-items:center;gap:7px;color:#ffd9b0;font-size:13.5px;font-weight:700}
+  .herolinks a:hover{color:#fff;text-decoration:none}
+
+  /* ── sections ────────────────────────────────────────────────────── */
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin-bottom:20px;scroll-margin-top:18px;box-shadow:var(--shadow)}
+  section>h2{margin:0 0 16px;font-size:22px;padding-bottom:12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}
+  section>h2 .hicon{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent-2);display:grid;place-items:center;flex:0 0 auto}
+  section h3{margin:24px 0 8px;font-size:17px;color:var(--ink)}
+  section h4{margin:18px 0 6px;font-size:14.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+  section p{margin:9px 0}
+  ul,ol{padding-left:22px;margin:9px 0}
+  li{margin:4px 0}
+
+  /* ── tables ──────────────────────────────────────────────────────── */
+  .tablewrap{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+  th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--code-bg);font-weight:800;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fbfcfe}
+  td code{white-space:nowrap}
+
+  /* ── callouts ────────────────────────────────────────────────────── */
+  .note,.tip,.warn,.danger{display:flex;gap:11px;border-radius:11px;padding:13px 15px;margin:14px 0;font-size:14.2px;border:1px solid}
+  .note{background:#eff6ff;border-color:#cfe2fb;color:#20364f}
+  .tip{background:#eefaf1;border-color:#c9e9d1;color:#1d4429}
+  .warn{background:#fff8e8;border-color:#ffe3a9;color:#5a4208}
+  .danger{background:#fdeeed;border-color:#f8cdc8;color:#5e1c15}
+  .note .ico{color:var(--info)} .tip .ico{color:var(--ok)}
+  .warn .ico{color:var(--warn)} .danger .ico{color:var(--danger)}
+  .note b,.tip b,.warn b,.danger b{display:block;margin-bottom:2px}
+
+  /* ── feature grid ────────────────────────────────────────────────── */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:14px;margin-top:14px}
+  .fcard{border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:#fdfefe}
+  .fcard .top{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .fcard .bx{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-2);flex:0 0 auto}
+  .fcard b{font-size:14.5px}
+  .fcard p{margin:0;font-size:13.6px;color:var(--muted);line-height:1.55}
+
+  /* ── steps ───────────────────────────────────────────────────────── */
+  ol.steps{counter-reset:s;list-style:none;padding-left:0;margin:14px 0}
+  ol.steps>li{counter-increment:s;position:relative;padding:1px 0 20px 44px}
+  ol.steps>li:last-child{padding-bottom:0}
+  ol.steps>li:before{content:counter(s);position:absolute;left:0;top:0;width:29px;height:29px;border-radius:9px;background:var(--accent);color:#fff;font-weight:800;display:grid;place-items:center;font-size:14px}
+  ol.steps>li:after{content:"";position:absolute;left:14px;top:34px;bottom:6px;width:1.5px;background:var(--line-2)}
+  ol.steps>li:last-child:after{display:none}
+  ol.steps>li>b:first-child{display:block;font-size:15.5px;margin-bottom:3px}
+
+  /* ── figures ─────────────────────────────────────────────────────── */
+  figure{margin:16px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  figure img{display:block;width:100%;height:auto}
+  figcaption{padding:9px 14px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);background:#fbfcfd}
+  /* min() keeps the track from exceeding the column on narrow screens, which would
+     otherwise push the whole page into horizontal scroll */
+  .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:16px;margin-top:14px;align-items:start}
+  .shots figure{margin:0;display:flex;flex-direction:column}
+  .shots figcaption{margin-top:auto}
+
+  .kbd{background:#fff;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12.5px;font-weight:800;font-family:inherit;color:var(--ink-2);white-space:nowrap}
+  .tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:800}
+  .tag.ok{background:#e7f6ea;color:#1d7a35}
+  .tag.no{background:#fdecea;color:#b3261e}
+  .tag.view{background:#eaf1fd;color:#1c5bb8}
+  .path{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.85em;overflow-wrap:anywhere}
+
+  footer{max-width:1340px;margin:0 auto;padding:24px;color:var(--muted);font-size:13.5px;border-top:1px solid var(--line)}
+  .footlinks{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:10px}
+  .footlinks a{font-weight:700}
+  .totop{position:fixed;right:20px;bottom:20px;background:var(--accent);color:#fff;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;box-shadow:0 6px 20px rgba(255,159,67,.45);opacity:0;pointer-events:none;transition:opacity .2s;border:none;cursor:pointer}
+  .totop.show{opacity:1;pointer-events:auto}
+
+  /* ── mobile ──────────────────────────────────────────────────────── */
+  .menubtn{display:none;position:fixed;left:14px;top:14px;z-index:60;background:#fff;border:1px solid var(--line-2);border-radius:10px;width:42px;height:42px;place-items:center;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
+  .backdrop{display:none;position:fixed;inset:0;background:rgba(9,44,76,.45);z-index:49}
+  @media(max-width:1000px){
+    .shell{padding:0 16px;gap:0}
+    .menubtn{display:grid}
+    aside{position:fixed;left:0;top:0;z-index:50;background:var(--bg);border-right:1px solid var(--line);transform:translateX(-100%);transition:transform .22s ease;padding:0 6px;box-shadow:0 0 40px rgba(9,44,76,.14)}
+    /* clear the fixed hamburger, which otherwise sits on top of the logo */
+    .brand{padding-left:56px}
+    body.navopen aside{transform:none}
+    body.navopen .backdrop{display:block}
+    main{padding-top:66px}
+    section{padding:20px 17px}
+    .hero{padding:28px 22px}
+    .hero h1{font-size:26px}
+  }
+  @media print{
+    aside,.menubtn,.totop,.backdrop{display:none!important}
+    section{break-inside:avoid;box-shadow:none;border-color:#ddd}
+    body{background:#fff}
+  }
+</style>
+</head>
+<body>
+
+<!-- ─────────────── icon sprite ─────────────── -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8L20 10.7l-5.2 3.4L15.6 20 12 16.6 8.4 20l.8-5.9L4 10.7l6.1-1.9z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="7" rx="2"/><rect x="2" y="14" width="20" height="7" rx="2"/><path d="M6 6.5h.01M6 17.5h.01"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><path d="M18 12h.01"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10"/><path d="m3 7 4-4 4 4M3 7c0 2.2 1.8 4 4 4s4-1.8 4-4"/><path d="m13 7 4-4 4 4M13 7c0 2.2 1.8 4 4 4s4-1.8 4-4"/></symbol>
+    <symbol id="i-life" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="m4.9 4.9 4.2 4.2M14.9 14.9l4.2 4.2M14.9 9.1l4.2-4.2M4.9 19.1l4.2-4.2"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v1h6v-1c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 8.8-8.8M17 6l3 3M14 9l3 3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  </defs>
+</svg>
+
+<button class="menubtn" id="menubtn" aria-label="Open navigation"><svg class="ico ico-lg"><use href="#i-menu"/></svg></button>
+<div class="backdrop" id="backdrop"></div>
+
+<div class="shell">
+  <aside id="aside">
+    <a class="brand" href="https://softglaze.com" title="softglaze.com">
+      <div class="logo"><svg class="ico ico-lg" style="stroke-width:2.2"><use href="#i-package"/></svg></div>
+      <div><b>SoftGlaze</b><span>Stock Manager · Docs</span></div>
+    </a>
+    <div class="navsearch">
+      <svg class="ico"><use href="#i-search"/></svg>
+      <input type="search" id="navfilter" placeholder="Filter sections…" aria-label="Filter documentation sections" />
+    </div>
+    <nav id="nav">
+      <div class="grouplabel">Getting started</div>
+      <a href="#intro"><svg class="ico"><use href="#i-book"/></svg>Introduction</a>
+      <a href="#features"><svg class="ico"><use href="#i-spark"/></svg>Feature overview</a>
+      <a href="#screenshots"><svg class="ico"><use href="#i-image"/></svg>Screenshots</a>
+      <a href="#requirements"><svg class="ico"><use href="#i-check"/></svg>Requirements</a>
+
+      <div class="grouplabel">Installation</div>
+      <a href="#install-local"><svg class="ico"><use href="#i-laptop"/></svg>Local install</a>
+      <a href="#install-server"><svg class="ico"><use href="#i-server"/></svg>Server / VPS install</a>
+      <a href="#install-desktop"><svg class="ico"><use href="#i-monitor"/></svg>Windows desktop app</a>
+      <a href="#config"><svg class="ico"><use href="#i-sliders"/></svg>Configuration</a>
+      <a href="#firstrun"><svg class="ico"><use href="#i-rocket"/></svg>First run &amp; business types</a>
+
+      <div class="grouplabel">Using the app</div>
+      <a href="#dashboard"><svg class="ico"><use href="#i-layout"/></svg>Dashboard</a>
+      <a href="#pos"><svg class="ico"><use href="#i-cart"/></svg>Point of sale</a>
+      <a href="#inventory"><svg class="ico"><use href="#i-package"/></svg>Inventory &amp; stock</a>
+      <a href="#purchases"><svg class="ico"><use href="#i-truck"/></svg>Purchases</a>
+      <a href="#people"><svg class="ico"><use href="#i-users"/></svg>Customers &amp; vendors</a>
+      <a href="#money"><svg class="ico"><use href="#i-wallet"/></svg>Money &amp; accounts</a>
+      <a href="#reports"><svg class="ico"><use href="#i-chart"/></svg>Reports</a>
+      <a href="#roles"><svg class="ico"><use href="#i-shield"/></svg>Users &amp; roles</a>
+      <a href="#settings"><svg class="ico"><use href="#i-settings"/></svg>Settings</a>
+
+      <div class="grouplabel">Operations</div>
+      <a href="#backup"><svg class="ico"><use href="#i-db"/></svg>Backup &amp; restore</a>
+      <a href="#updating"><svg class="ico"><use href="#i-refresh"/></svg>Updating</a>
+      <a href="#integrity"><svg class="ico"><use href="#i-scale"/></svg>Accounting integrity</a>
+      <a href="#troubleshooting"><svg class="ico"><use href="#i-life"/></svg>Troubleshooting</a>
+
+      <div class="grouplabel">Reference</div>
+      <a href="#api"><svg class="ico"><use href="#i-code"/></svg>API reference</a>
+      <a href="#stack"><svg class="ico"><use href="#i-layers"/></svg>Tech stack</a>
+      <a href="#changelog"><svg class="ico"><use href="#i-history"/></svg>Changelog</a>
+      <a href="#support"><svg class="ico"><use href="#i-help"/></svg>Support &amp; license</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <span class="pill"><svg class="ico" style="width:14px;height:14px"><use href="#i-book"/></svg> Documentation · v{{VERSION}}</span>
+      <h1>SoftGlaze Stock Manager</h1>
+      <p>A premium Inventory + Point-of-Sale system for retail and wholesale shops. One code base
+         ships to both the browser and the Windows desktop, with first-class pay-later (udhaar)
+         credit and exact, ledger-backed accounting.</p>
+      <div class="herometa">
+        <span>React 18 + Vite 6</span><span>Node + Express + Prisma</span>
+        <span>PostgreSQL</span><span>Electron desktop</span><span>Light &amp; dark</span>
+      </div>
+      <div class="herolinks">
+        <a href="https://softglaze.com"><svg class="ico"><use href="#i-globe"/></svg>softglaze.com</a>
+        <a href="https://softglaze.com/docs/stock-manager/"><svg class="ico"><use href="#i-book"/></svg>Latest documentation</a>
+        <a href="https://github.com/softglazee/Softglaze-inventory-management"><svg class="ico"><use href="#i-code"/></svg>Source repository</a>
+      </div>
+    </div>
+
+    <!-- ════════════════ INTRODUCTION ════════════════ -->
+    <section id="intro">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-book"/></svg></span>Introduction</h2>
+      <p>Thank you for choosing <b>SoftGlaze Stock Manager</b>. It runs two ways from a single code base,
+         and you can switch between them (or run both against the same database) at any time.</p>
+      <div class="cards">
+        <div class="fcard">
+          <div class="top"><span class="bx"><svg class="ico"><use href="#i-monitor"/></svg></span><b>Windows desktop</b></div>
+          <p>One installer for the shop counter PC. Bundles its own PostgreSQL — no database to install,
+             no internet needed. Best for a single shop.</p>
+        </div>
+        <div class="fcard">
+          <div class="top"><span class="bx"><svg class="ico"><use href="#i-server"/></svg></span><b>Browser / self-host</b></div>
+          <p>Host it on your own VPS and reach it from any phone, tablet or PC. Best for multiple
+             users, multiple locations, or remote access.</p>
+        </div>
+      </div>
+      <p>The app is <b>business-agnostic</b>. On first run you pick a Business Type preset and it seeds the
+         right categories and units for your trade. Money is stored as exact decimals (never floating point),
+         and every financial action is written in a single database transaction — so the books never drift.</p>
+      <div class="tip"><svg class="ico ico-lg"><use href="#i-globe"/></svg><div><b>Always-current version online</b>
+        This guide is also published at
+        <a href="https://softglaze.com/docs/stock-manager/">softglaze.com/docs/stock-manager</a>.
+        If you are reading a copy that shipped with an older download, check there for the latest.</div></div>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>Who this guide is for</b>
+        Shop owners setting up the desktop app need only the
+        <a href="#install-desktop">Windows desktop</a> section. Developers self-hosting the browser app
+        should read <a href="#install-server">Server / VPS install</a> — basic familiarity with Node.js,
+        nginx and PostgreSQL is enough.</div></div>
+    </section>
+
+    <!-- ════════════════ FEATURES ════════════════ -->
+    <section id="features">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-spark"/></svg></span>Feature overview</h2>
+      <div class="cards">
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-cart"/></svg></span><b>Point of sale</b></div>
+          <p>Full-screen, keyboard-first POS with product tiles, barcode search, held bills, quotations,
+             split payments, cash or udhaar, and 80mm / A4 receipts.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-package"/></svg></span><b>Inventory</b></div>
+          <p>Standard, service and combo products; weighted-average cost; barcodes; multiple images;
+             low-stock alerts; adjustments with reasons; purchase orders → GRN.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-users"/></svg></span><b>Receivables &amp; payables</b></div>
+          <p>Customer and vendor ledgers, credit limits, promises-to-pay, post-dated cheques,
+             customer sites/projects, price groups and contract rates.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-wallet"/></svg></span><b>Money</b></div>
+          <p>Multiple cash / bank / wallet accounts, transfers, capital &amp; drawings, day close,
+             expenses (including recurring), employee salaries and advances.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-chart"/></svg></span><b>Reports</b></div>
+          <p>Dashboard, accrual P&amp;L, balance sheet, stock valuation, sales / purchase registers and
+             comparative reports — each with an on-screen table plus PDF and Excel export.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-shield"/></svg></span><b>Security</b></div>
+          <p>JWT access + rotating refresh tokens, bcrypt(12), optional 2FA (TOTP), a dynamic role
+             permission matrix, rate-limited auth, and a full audit log.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-db"/></svg></span><b>Backup</b></div>
+          <p>One-click portable JSON snapshot and restore, plus optional nightly offsite upload to a
+             pre-signed S3 / GCS URL.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-spark"/></svg></span><b>Extras</b></div>
+          <p>WhatsApp (wa.me) and SMTP messaging, loyalty points, bulk import/export wizard,
+             built-in calculator, construction estimator, steel weight calculator.</p></div>
+      </div>
+    </section>
+
+    <!-- ════════════════ SCREENSHOTS ════════════════ -->
+    <section id="screenshots">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-image"/></svg></span>Screenshots</h2>
+      <p>All screens ship in both light and dark themes; the light theme is shown here.</p>
+      <div class="shots">
+        <figure><img src="{{IMG:dashboard}}" alt="SoftGlaze dashboard showing KPI cards and charts" loading="lazy" /><figcaption>Dashboard — KPI cards, sales &amp; purchase trend, low stock and recent activity</figcaption></figure>
+        <figure><img src="{{IMG:pos}}" alt="Point of sale screen with product tiles and cart" loading="lazy" /><figcaption>Point of sale — product tiles on the left, live cart and payment on the right</figcaption></figure>
+        <figure><img src="{{IMG:products}}" alt="Product list with stock badges" loading="lazy" /><figcaption>Products — search, category filter and stock-status badges</figcaption></figure>
+        <figure><img src="{{IMG:sales}}" alt="Sales invoice list" loading="lazy" /><figcaption>Sales — every invoice with payment status and quick actions</figcaption></figure>
+        <figure><img src="{{IMG:customers}}" alt="Customer list with balances" loading="lazy" /><figcaption>Customers — balances, credit limits and ledger access</figcaption></figure>
+        <figure><img src="{{IMG:reports}}" alt="Reports screen" loading="lazy" /><figcaption>Reports — every report exports to PDF and Excel</figcaption></figure>
+        <figure><img src="{{IMG:settings}}" alt="Settings screen" loading="lazy" /><figcaption>Settings — shop profile, invoicing, integrations, security and backup</figcaption></figure>
+        <figure><img src="{{IMG:login}}" alt="Login screen" loading="lazy" /><figcaption>Sign in — branded with your shop logo and name</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ════════════════ REQUIREMENTS ════════════════ -->
+    <section id="requirements">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-check"/></svg></span>Requirements</h2>
+      <h3>Windows desktop app (end user)</h3>
+      <p>Nothing to install beyond the app itself — PostgreSQL is bundled.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Item</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>Operating system</td><td>Windows 10 or 11, 64-bit</td></tr>
+          <tr><td>Memory</td><td>4 GB RAM minimum (8 GB comfortable)</td></tr>
+          <tr><td>Disk</td><td>~700 MB for the app + room for your data and images</td></tr>
+          <tr><td>Internet</td><td>Not required — the app is fully offline</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Browser / self-hosted install</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Item</th><th>Requirement</th></tr></thead>
+        <tbody>
+          <tr><td>Node.js</td><td>18 or newer (20 / 22 recommended) with npm</td></tr>
+          <tr><td>PostgreSQL</td><td>14 or newer</td></tr>
+          <tr><td>Server</td><td>Ubuntu 22.04 / 24.04, 2 GB RAM is plenty</td></tr>
+          <tr><td>Disk</td><td>~500 MB for dependencies, plus data and uploads</td></tr>
+          <tr><td>Domain</td><td>A domain or sub-domain pointed at the server (for HTTPS)</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Supported browsers</h3>
+      <p>Any current Chrome, Edge, Firefox or Safari. The interface is responsive and works on a shop
+         desktop, laptop or tablet.</p>
+    </section>
+
+    <!-- ════════════════ LOCAL INSTALL ════════════════ -->
+    <section id="install-local">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-laptop"/></svg></span>Local install (development)</h2>
+      <p>Use this to run the source on your own machine — for evaluation, customisation, or before
+         deploying to a server.</p>
+
+      <ol class="steps">
+        <li><b>Install dependencies</b>
+          From the project root (the folder containing the top-level <code>package.json</code>):
+<pre><code><span class="k">npm</span> install</code></pre>
+          <p>This installs all three workspaces (<code>apps/server</code>, <code>apps/web</code>,
+             <code>apps/desktop</code>) in one go.</p>
+        </li>
+
+        <li><b>Create the database</b>
+          Create an empty PostgreSQL database and a user that owns it:
+<pre><code><span class="c"># psql as a superuser</span>
+<span class="k">CREATE USER</span> softglaze <span class="k">WITH PASSWORD</span> <span class="s">'choose_a_password'</span>;
+<span class="k">CREATE DATABASE</span> softglaze <span class="k">OWNER</span> softglaze;</code></pre>
+          <p>A <code>docker-compose.yml</code> is included if you would rather run PostgreSQL in Docker.</p>
+        </li>
+
+        <li><b>Configure the API</b>
+          Copy the example environment file and edit it:
+<pre><code><span class="k">cp</span> apps/server/.env.example apps/server/.env</code></pre>
+          <p>Set <code>DATABASE_URL</code> to match the user and database you just created, and generate two
+             different secrets for <code>JWT_SECRET</code> and <code>JWT_REFRESH_SECRET</code>. See
+             <a href="#config">Configuration</a> for every key.</p>
+        </li>
+
+        <li><b>Create the schema and seed defaults</b>
+<pre><code><span class="k">npm</span> run db:migrate
+<span class="k">npm</span> run db:seed</code></pre>
+          <p>Seeding creates units, categories, payment methods, expense categories, settings and the
+             role permission matrix. It does <b>not</b> create a user — you do that in the browser.</p>
+        </li>
+
+        <li><b>Start the app</b>
+<pre><code><span class="k">npm</span> run dev</code></pre>
+          <p>This runs the API on <b>http://localhost:4000</b> and the web app on
+             <b>http://localhost:5173</b> together, both with hot reload. Open the web address.</p>
+        </li>
+
+        <li><b>Create the owner account</b>
+          The app detects that no user exists and offers <b>Create owner account</b>. The first account
+          becomes the Super Admin; registration then closes permanently. Continue at
+          <a href="#firstrun">First run</a>.
+        </li>
+      </ol>
+
+      <h3>Useful scripts</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>npm run dev</code></td><td>API + web together with hot reload</td></tr>
+          <tr><td><code>npm run dev:server</code> / <code>npm run dev:web</code></td><td>Run only one side</td></tr>
+          <tr><td><code>npm run build</code></td><td>Type-check and build both for production</td></tr>
+          <tr><td><code>npm run db:migrate</code></td><td>Apply Prisma migrations</td></tr>
+          <tr><td><code>npm run db:seed</code></td><td>Seed units, categories, payment methods, settings</td></tr>
+          <tr><td><code>npm run db:studio</code></td><td>Open Prisma Studio to browse the database</td></tr>
+          <tr><td><code>npm run desktop</code></td><td>Launch the Electron shell</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="tip"><svg class="ico ico-lg"><use href="#i-bulb"/></svg><div><b>Check the API is alive</b>
+        Open <code>http://localhost:4000/api/v1/health</code> — it should return
+        <code>{"ok":true,"data":{"status":"up",…}}</code>.</div></div>
+    </section>
+
+    <!-- ════════════════ SERVER INSTALL ════════════════ -->
+    <section id="install-server">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-server"/></svg></span>Server / VPS install (production)</h2>
+      <p>This puts the browser app online with HTTPS, a process manager that restarts it automatically,
+         and nightly backups. The walkthrough targets <b>Ubuntu 22.04 / 24.04</b>; a 2 GB VPS is plenty.</p>
+
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>Before you start</b>
+        You need SSH access to the server, and a domain or sub-domain (e.g.
+        <code>stock.yourshop.com</code>) with an <b>A record</b> pointing at the server's IP address.</div></div>
+
+      <ol class="steps">
+        <li><b>Install the system packages</b> — as <code>root</code>:
+<pre><code>apt update &amp;&amp; apt upgrade -y
+apt install -y nginx postgresql ufw git
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &amp;&amp; apt install -y nodejs
+npm i -g pm2
+ufw allow OpenSSH &amp;&amp; ufw allow <span class="s">'Nginx Full'</span> &amp;&amp; ufw enable</code></pre>
+        </li>
+
+        <li><b>Create the database</b>
+<pre><code>sudo -u postgres psql -c <span class="s">"CREATE USER softglaze WITH PASSWORD 'STRONG_DB_PASSWORD';"</span>
+sudo -u postgres psql -c <span class="s">"CREATE DATABASE softglaze OWNER softglaze;"</span></code></pre>
+          <p>Use a long random password — you will paste it into <code>DATABASE_URL</code> next.</p>
+        </li>
+
+        <li><b>Deploy the application</b>
+<pre><code>mkdir -p /var/www &amp;&amp; cd /var/www
+git clone &lt;YOUR_REPO_URL&gt; softglaze &amp;&amp; cd softglaze
+bash deploy/deploy.sh</code></pre>
+          <p>The first run stops and asks you to create <code>apps/server/.env</code>. Copy
+             <code>deploy/env.production.example</code> to <code>apps/server/.env</code> and fill in:</p>
+          <ul>
+            <li>the real <code>DATABASE_URL</code> password;</li>
+            <li>two different secrets, each from <code>openssl rand -hex 32</code>;</li>
+            <li><code>CORS_ORIGIN=https://stock.yourshop.com</code>;</li>
+            <li><code>UPLOAD_DIR</code> as an <b>absolute path outside the checkout</b>, e.g.
+                <code>/var/www/softglaze-uploads</code>, so images survive redeploys.</li>
+          </ul>
+          <p>Then run <code>bash deploy/deploy.sh</code> again. It installs, builds, migrates, seeds and
+             starts the API under PM2.</p>
+        </li>
+
+        <li><b>Configure nginx</b>
+<pre><code>sudo cp deploy/nginx-softglaze.conf /etc/nginx/sites-available/softglaze
+sudo sed -i <span class="s">'s/stock.YOURSHOP.com/stock.yourshop.com/'</span> /etc/nginx/sites-available/softglaze
+sudo ln -s /etc/nginx/sites-available/softglaze /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code></pre>
+          <p>nginx serves the built web app and proxies <code>/api</code> and <code>/uploads</code> to
+             the Node process.</p>
+        </li>
+
+        <li><b>Enable HTTPS</b> — free, and renews itself:
+<pre><code>sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d stock.yourshop.com</code></pre>
+        </li>
+
+        <li><b>Schedule nightly backups</b> — 3 AM every day:
+<pre><code>( crontab -l 2>/dev/null; echo <span class="s">"0 3 * * * cd /var/www/softglaze &amp;&amp; bash deploy/backup.sh >> /var/log/softglaze-backup.log 2>&amp;1"</span> ) | crontab -</code></pre>
+          <p><code>deploy/backup.sh</code> runs <code>pg_dump</code> and prunes old dumps.</p>
+        </li>
+
+        <li><b>Open the site and register</b>
+          Visit <code>https://stock.yourshop.com</code>, create the owner account, choose your business
+          type, and you are live.
+        </li>
+      </ol>
+
+      <h3>What is in <span class="path">deploy/</span></h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>deploy.sh</code></td><td>First-time deploy — install, build, migrate, seed, start under PM2</td></tr>
+          <tr><td><code>update.sh</code></td><td>Safe update — backs up first, then pulls, builds, migrates, restarts</td></tr>
+          <tr><td><code>backup.sh</code></td><td><code>pg_dump</code> backup and pruning of old dumps</td></tr>
+          <tr><td><code>ecosystem.config.cjs</code></td><td>PM2 process definition</td></tr>
+          <tr><td><code>nginx-softglaze.conf</code></td><td>nginx site — static web app + API/uploads proxy</td></tr>
+          <tr><td><code>env.production.example</code></td><td>Production environment template</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Single-origin mode (no nginx)</h3>
+      <p>The API can serve the built web app itself, which is handy for a quick internal deployment.
+         Set <code>SERVE_WEB=1</code> and <code>NODE_ENV=production</code>, run <code>npm run build</code>,
+         then start the server — it serves the SPA with correct fallback while leaving
+         <code>/api</code> and <code>/uploads</code> untouched.</p>
+
+      <div class="warn"><svg class="ico ico-lg"><use href="#i-alert"/></svg><div><b>Never commit secrets</b>
+        <code>apps/server/.env</code> and the uploads folder must stay out of version control. Both are
+        already listed in <code>.gitignore</code>.</div></div>
+    </section>
+
+    <!-- ════════════════ DESKTOP INSTALL ════════════════ -->
+    <section id="install-desktop">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-monitor"/></svg></span>Windows desktop app</h2>
+      <p>The desktop build wraps the API, the web app <b>and a private PostgreSQL</b> into a single
+         Windows installer. The shop PC needs no database, no Node.js and no internet connection.</p>
+
+      <h3>Installing (for the shop)</h3>
+      <ol class="steps">
+        <li><b>Run the installer</b>
+          Double-click <code>SoftGlaze-Stock-Manager-Setup-1.0.0.exe</code> and follow the prompts. You can
+          change the install folder; a desktop and Start-menu shortcut are created.
+          <p>Windows SmartScreen may warn that the publisher is unknown because the build is not
+             code-signed. Choose <b>More info → Run anyway</b>.</p>
+        </li>
+        <li><b>First launch</b>
+          A splash screen appears while the app creates its private database, applies migrations and seeds
+          defaults. <b>This takes up to a minute the first time</b> — later launches are quick.
+        </li>
+        <li><b>Create the owner account</b>
+          The window opens on the registration page. Create the owner account, pick a business type,
+          and start selling. See <a href="#firstrun">First run</a>.
+        </li>
+      </ol>
+
+      <h3>Where the desktop app keeps things</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>What</th><th>Location</th></tr></thead>
+        <tbody>
+          <tr><td>Database</td><td><span class="path">%APPDATA%\@softglaze\desktop\pgdata</span></td></tr>
+          <tr><td>Uploaded images</td><td><span class="path">%APPDATA%\@softglaze\desktop\uploads</span></td></tr>
+          <tr><td>Configuration</td><td><span class="path">%APPDATA%\@softglaze\desktop\softglaze.config.json</span></td></tr>
+          <tr><td>Diagnostic log</td><td><span class="path">%APPDATA%\@softglaze\desktop\desktop.log</span></td></tr>
+          <tr><td>Database log</td><td><span class="path">%APPDATA%\@softglaze\desktop\pg.log</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip"><svg class="ico ico-lg"><use href="#i-bulb"/></svg><div><b>Back these up</b>
+        Everything the shop owns lives under <span class="path">%APPDATA%\@softglaze\desktop</span>.
+        Copying that folder (with the app closed) is a complete backup. See
+        <a href="#backup">Backup &amp; restore</a> for the in-app method.</div></div>
+
+      <h3>Using an external PostgreSQL instead</h3>
+      <p>Edit <code>softglaze.config.json</code>, set <code>"embeddedDb": false</code> and provide your own
+         <code>databaseUrl</code>. The app then stops managing PostgreSQL and simply connects.</p>
+<pre><code>{
+  <span class="s">"embeddedDb"</span>: false,
+  <span class="s">"databaseUrl"</span>: <span class="s">"postgresql://user:pass@192.168.1.10:5432/softglaze?schema=public"</span>
+}</code></pre>
+      <p>This is how you point several counter PCs at one shared shop database.</p>
+
+      <h3>Ports</h3>
+      <p>The app serves itself on <b>port 4000</b> by default. If that port is already taken it
+         automatically moves to the next free one (4001, 4002, …) and logs the choice to
+         <code>desktop.log</code>, so it never collides with a development server or a second copy.
+         The bundled PostgreSQL listens on <b>127.0.0.1:55432</b> only — it is never exposed to the network.</p>
+
+      <h3>Building the installer yourself</h3>
+<pre><code><span class="k">cd</span> apps/desktop
+<span class="k">npm</span> run dist</code></pre>
+      <p>The <code>predist</code> step generates the Prisma client, builds the server and web app, and stages
+         a minimal PostgreSQL runtime. The finished installer appears in
+         <code>apps/desktop/release/</code>. Anything placed in <code>apps/server/uploads/</code> before the
+         build is bundled and restored into the user's uploads folder on first launch — that is how a
+         data-preloaded build ships its product photos.</p>
+    </section>
+
+    <!-- ════════════════ CONFIGURATION ════════════════ -->
+    <section id="config">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-sliders"/></svg></span>Configuration</h2>
+      <p>The API reads its configuration from <code>apps/server/.env</code>. The desktop app writes its own
+         equivalent into <code>softglaze.config.json</code> and does not use this file.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Key</th><th>Example</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>DATABASE_URL</code></td><td><code>postgresql://user:pass@localhost:5432/softglaze?schema=public</code></td><td>PostgreSQL connection string</td></tr>
+          <tr><td><code>PORT</code></td><td><code>4000</code></td><td>Port the API listens on</td></tr>
+          <tr><td><code>NODE_ENV</code></td><td><code>production</code></td><td><code>development</code> locally</td></tr>
+          <tr><td><code>JWT_SECRET</code></td><td>32-byte hex</td><td>Generate with <code>openssl rand -hex 32</code></td></tr>
+          <tr><td><code>JWT_REFRESH_SECRET</code></td><td>32-byte hex</td><td>Must differ from <code>JWT_SECRET</code></td></tr>
+          <tr><td><code>ACCESS_TOKEN_TTL</code></td><td><code>15m</code></td><td>Access token lifetime</td></tr>
+          <tr><td><code>REFRESH_TOKEN_TTL</code></td><td><code>7d</code></td><td>Refresh token lifetime</td></tr>
+          <tr><td><code>CORS_ORIGIN</code></td><td><code>https://stock.yourshop.com</code></td><td>Comma-separate for several origins</td></tr>
+          <tr><td><code>UPLOAD_DIR</code></td><td><code>/var/www/softglaze-uploads</code></td><td>Absolute path in production</td></tr>
+          <tr><td><code>SERVE_WEB</code></td><td><code>1</code></td><td>Optional — API also serves the built web app</td></tr>
+          <tr><td><code>WEB_DIST</code></td><td><code>../web/dist</code></td><td>Optional — where the built web app lives</td></tr>
+        </tbody>
+      </table></div>
+      <div class="danger"><svg class="ico ico-lg"><use href="#i-key"/></svg><div><b>Rotating JWT secrets signs everyone out</b>
+        Changing either secret invalidates all existing sessions immediately. That is exactly what you want
+        if a token may have leaked — just expect every user to log in again.</div></div>
+
+      <h3>In-app settings</h3>
+      <p>Everything else is configured inside the app under <b>Settings</b> — shop profile and logo,
+         invoice prefixes and footer, currency and tax defaults, receipt size, integrations (SMTP,
+         WhatsApp), security (2FA) and backup. No restart needed.</p>
+    </section>
+
+    <!-- ════════════════ FIRST RUN ════════════════ -->
+    <section id="firstrun">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-rocket"/></svg></span>First run &amp; business types</h2>
+      <ol class="steps">
+        <li><b>Create the owner account</b>
+          A fresh install has no users, so the app offers <b>Create owner account</b>. This first account
+          becomes the <b>Super Admin</b> and owns the shop.
+          <p>Registration closes permanently afterwards — every further account is created by an
+             administrator under <a href="#roles">Users &amp; Roles</a>.</p>
+        </li>
+        <li><b>Choose your business type</b>
+          You are taken straight to a one-time setup screen that seeds sensible categories and units for
+          your trade. You can change or delete anything later; this only saves typing.
+          <figure><img src="{{IMG:onboarding}}" alt="Business type selection during first run" loading="lazy" /><figcaption>First run — pick the preset closest to your shop</figcaption></figure>
+        </li>
+        <li><b>Set up your shop profile</b>
+          Go to <b>Settings → Shop</b> and add your name, logo, address, phone and tax number. These appear
+          on every invoice, receipt and PDF report.
+        </li>
+        <li><b>Load your stock</b>
+          Add products by hand, or use <b>bulk import</b> to load a spreadsheet of products, customers or
+          vendors in one pass. Enter opening stock and opening balances so your reports start from the
+          right place.
+        </li>
+      </ol>
+
+      <h3>Business type presets</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Preset</th><th>Suits</th></tr></thead>
+        <tbody>
+          <tr><td><b>Building Materials</b></td><td>Cement, sariya (iron rods), windows, doors, pipes, hardware. Enables the steel weight calculator, cutting and the construction estimator.</td></tr>
+          <tr><td><b>Kiryana / General Store</b></td><td>Grocery, beverages, snacks, cleaning, dairy — everyday retail</td></tr>
+          <tr><td><b>Electronics</b></td><td>Mobiles, accessories, home appliances, repair parts</td></tr>
+          <tr><td><b>Clothing</b></td><td>Gents, ladies, kids, unstitched fabric, accessories</td></tr>
+          <tr><td><b>Pharmacy</b></td><td>Tablets, syrups, surgical items, cosmetics (batch / expiry aware)</td></tr>
+          <tr><td><b>Hardware &amp; Paint</b></td><td>Tools, fasteners, paint, plumbing, electrical</td></tr>
+          <tr><td><b>Custom</b></td><td>Start empty and build your own categories and units</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>The preset also tailors the menu</b>
+        Trade-specific tools stay hidden unless the preset needs them — a clothing shop does not see the
+        steel weight calculator. You can change the business type later under <b>Settings</b>.</div></div>
+    </section>
+
+    <!-- ════════════════ DASHBOARD ════════════════ -->
+    <section id="dashboard">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-layout"/></svg></span>Dashboard</h2>
+      <p>The landing screen answers "how is the shop doing?" at a glance. Everything respects the signed-in
+         user's role — a cashier never sees profit figures.</p>
+      <figure><img src="{{IMG:dashboard-full}}" alt="Full dashboard page with KPI cards, charts and lists" loading="lazy" /><figcaption>The whole dashboard — the date range picker at the top right drives the trend chart</figcaption></figure>
+      <ul>
+        <li><b>Headline cards</b> — total sales, sales returns, total purchases and purchase returns for the month.</li>
+        <li><b>Money cards</b> — profit (or today's sales for restricted roles), invoice due from customers, expenses and payables to vendors.</li>
+        <li><b>Sales &amp; Purchase chart</b> — a daily comparison over the range you select (today, 7, 14 or 30 days).</li>
+        <li><b>Overall information</b> — supplier, customer and order counts, plus first-time vs returning customers.</li>
+        <li><b>Lists</b> — top selling products, low stock, recent sales and recent transactions.</li>
+        <li><b>Sales statistics</b> — revenue against expense over the last twelve months.</li>
+        <li><b>Order statistics</b> — a weekday × hour heatmap showing when your shop is busiest.</li>
+      </ul>
+      <div class="tip"><svg class="ico ico-lg"><use href="#i-bulb"/></svg><div><b>Low stock banner</b>
+        When any product falls to or below its minimum level, a banner appears at the top with a direct
+        link to restock.</div></div>
+    </section>
+
+    <!-- ════════════════ POS ════════════════ -->
+    <section id="pos">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-cart"/></svg></span>Point of sale</h2>
+      <p>The POS is a full-screen, keyboard-first billing screen built for speed at a busy counter.</p>
+      <figure><img src="{{IMG:pos}}" alt="POS screen" loading="lazy" /><figcaption>Search or scan on the left, cart and payment on the right</figcaption></figure>
+
+      <h3>Making a sale</h3>
+      <ol class="steps">
+        <li><b>Add items</b> Search by name, SKU or barcode, or click a product tile. A barcode scanner types
+          into the search box and <span class="kbd">Enter</span> adds the first match.</li>
+        <li><b>Adjust the line</b> Change quantity, override the price (if your role allows) or apply a line discount.</li>
+        <li><b>Choose the customer</b> Walk-in by default, or search an existing customer — you can add a new
+          one without leaving the screen.</li>
+        <li><b>Take payment</b> Cash, bank, card, mobile wallet, <b>credit (udhaar)</b>, or a split across
+          several methods. Credit sales are blocked when the customer is over their limit.</li>
+        <li><b>Complete and print</b> The invoice saves in one atomic transaction and prints an 80mm thermal
+          receipt or an A4 PDF.</li>
+      </ol>
+
+      <h3>Keyboard shortcuts</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><span class="kbd">F2</span></td><td>Jump to the product search box</td></tr>
+          <tr><td><span class="kbd">F6</span></td><td>Hold the current bill (saves it as a draft)</td></tr>
+          <tr><td><span class="kbd">F10</span></td><td>Complete the sale</td></tr>
+          <tr><td><span class="kbd">Enter</span></td><td>In search: add the first match · after a sale: start the next one</td></tr>
+          <tr><td><span class="kbd">Esc</span></td><td>Close the held-bills, quotations or quick-add panel</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Held bills and quotations</h3>
+      <p>Hold a bill when a customer steps away, and resume it from the <b>Held</b> button. Quotations are
+         saved, printable estimates that convert into a real invoice later without re-keying.</p>
+
+      <h3>Returns</h3>
+      <p>Use <b>Walk-in Return</b> for a counter return, or open the original invoice and return specific
+         lines. Stock goes back in and the customer balance or refund is handled automatically.</p>
+    </section>
+
+    <!-- ════════════════ INVENTORY ════════════════ -->
+    <section id="inventory">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-package"/></svg></span>Inventory &amp; stock</h2>
+      <figure><img src="{{IMG:products}}" alt="Product list" loading="lazy" /><figcaption>Products — search, filter by category, and see stock status at a glance</figcaption></figure>
+      <h3>Products</h3>
+      <ul>
+        <li><b>Types</b> — <b>Standard</b> (stocked), <b>Service</b> (no stock, e.g. delivery or cutting charges)
+            and <b>Combo</b> (a bundle of other products).</li>
+        <li><b>Identity</b> — auto-generated SKU, barcode, brand, category and unit.</li>
+        <li><b>Pricing</b> — cost, retail and wholesale prices, tax rate, and optional price groups or
+            contract rates for specific customers.</li>
+        <li><b>Images</b> — several per product with one marked primary; thumbnails are generated automatically.</li>
+        <li><b>Alerts</b> — a minimum stock level drives the low-stock badge, dashboard banner and report.</li>
+      </ul>
+
+      <h3>How stock is tracked</h3>
+      <p>Every movement — a sale, a purchase, a return, an adjustment — writes a row to the
+         <b>stock ledger</b>. The quantity shown on a product is a cache updated inside the same
+         transaction, so the two can never disagree. This gives you complete traceability: you can always
+         see exactly why a number changed.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Screen</th><th>Use it for</th></tr></thead>
+        <tbody>
+          <tr><td><b>Stock</b></td><td>Current quantity and value per product; make adjustments with a reason (damage, count fix, theft)</td></tr>
+          <tr><td><b>Purchase Orders</b></td><td>Raise a PO to a vendor, then receive it into stock (GRN)</td></tr>
+          <tr><td><b>Print Labels</b></td><td>Print barcode labels for shelf or product tagging</td></tr>
+          <tr><td><b>Weight Calc</b></td><td>Convert steel rod / sheet dimensions to weight (building materials &amp; hardware)</td></tr>
+          <tr><td><b>Cutting</b></td><td>Record rod or pipe cutting jobs and track the offcuts</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Costing</h3>
+      <p>Cost is <b>weighted average</b>, recalculated on every purchase:</p>
+<pre><code>newAverage = (oldQty × oldAverage + inQty × inCost) ÷ (oldQty + inQty)</code></pre>
+      <p>Each sale line stores a snapshot of the cost at that moment, so profit on an old invoice never
+         changes when prices move later.</p>
+    </section>
+
+    <!-- ════════════════ PURCHASES ════════════════ -->
+    <section id="purchases">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-truck"/></svg></span>Purchases</h2>
+      <p>Recording a purchase does four things in one transaction: stock comes in, the weighted-average
+         cost is recalculated, the vendor payable increases, and any payment you make is recorded.</p>
+      <ol class="steps">
+        <li><b>Pick the vendor</b> and the purchase date and reference.</li>
+        <li><b>Add items</b> with quantity and cost price.</li>
+        <li><b>Add charges</b> such as freight or loading — these are spread across the items so your landed
+          cost stays accurate.</li>
+        <li><b>Pay now or later</b> — pay in full, part-pay, or leave the whole amount on the vendor's account.</li>
+      </ol>
+      <p><b>Purchase returns</b> are raised against the original bill: stock goes out and the payable reduces.
+         <b>Vendor notes</b> record debit and credit notes outside a specific bill. Foreign-currency purchases
+         are converted to your currency on entry so all downstream reporting stays in one currency.</p>
+    </section>
+
+    <!-- ════════════════ PEOPLE ════════════════ -->
+    <section id="people">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-users"/></svg></span>Customers &amp; vendors</h2>
+      <figure><img src="{{IMG:customers}}" alt="Customer list with balances" loading="lazy" /><figcaption>Customers — outstanding balance and credit limit at a glance</figcaption></figure>
+      <h3>Ledgers</h3>
+      <p>Every customer and vendor has a running ledger: each invoice, return and payment with a balance
+         after every line. Print or share it as a PDF statement — useful when settling a monthly account.</p>
+      <h3>Credit control</h3>
+      <ul>
+        <li><b>Credit limits</b> — POS blocks a credit sale that would exceed the limit; an administrator can override.</li>
+        <li><b>Receivables aging</b> — outstanding balances bucketed 0–30, 31–60, 61–90 and 90+ days.</li>
+        <li><b>Promises to pay</b> — record what a customer committed to and follow it up.</li>
+        <li><b>Post-dated cheques</b> — a register of cheques with due dates and clearing status.</li>
+      </ul>
+      <h3>Extras</h3>
+      <ul>
+        <li><b>Customer sites</b> — separate sub-ledgers per project or delivery site for the same customer.</li>
+        <li><b>Price groups</b> and <b>rate contracts</b> — agreed pricing that applies automatically at POS.</li>
+        <li><b>Outreach</b> — send statements or reminders in bulk over WhatsApp or email.</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════ MONEY ════════════════ -->
+    <section id="money">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-wallet"/></svg></span>Money &amp; accounts</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Screen</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><b>Accounts &amp; Cash</b></td><td>Cash drawer, bank accounts and mobile wallets; transfer between them; record capital introduced and drawings</td></tr>
+          <tr><td><b>Payments</b></td><td>Receive from customers and pay vendors, against a balance or a specific document</td></tr>
+          <tr><td><b>Expenses</b></td><td>Categorised expenses including recurring ones (rent, electricity, salaries)</td></tr>
+          <tr><td><b>Day Close</b></td><td>Count the drawer and close the day — produces a Z-report of the shift</td></tr>
+          <tr><td><b>Cheques</b></td><td>Post-dated cheque register with due dates and clearing</td></tr>
+          <tr><td><b>Bank Reconciliation</b></td><td>Tick off entries against a bank statement</td></tr>
+          <tr><td><b>Employees</b></td><td>Staff records, attendance, advances and monthly salary payment (which posts its own expense)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>Accrual accounting</b>
+        A sale counts as revenue when it is invoiced, even if unpaid. A purchase counts as inventory cost
+        when received, even if unpaid. Cash movement is tracked separately in the cash book — so profit and
+        cash are never confused with each other.</div></div>
+    </section>
+
+    <!-- ════════════════ REPORTS ════════════════ -->
+    <section id="reports">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-chart"/></svg></span>Reports</h2>
+      <figure><img src="{{IMG:reports}}" alt="Reports screen" loading="lazy" /><figcaption>Every report shows on screen and exports to PDF and Excel</figcaption></figure>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Report</th><th>Shows</th></tr></thead>
+        <tbody>
+          <tr><td>Sales register</td><td>Every invoice, filterable by date, customer, product, category or cashier</td></tr>
+          <tr><td>Purchase register</td><td>The same for purchases</td></tr>
+          <tr><td>Profit &amp; Loss</td><td>Sales − returns − cost of goods sold = gross profit; minus expenses = net profit</td></tr>
+          <tr><td>Balance sheet</td><td>Assets, liabilities and equity</td></tr>
+          <tr><td>Stock valuation</td><td>Quantity, average cost and total value of everything on your shelves</td></tr>
+          <tr><td>Stock movement</td><td>The full ledger for a single product</td></tr>
+          <tr><td>Receivables</td><td>Customer dues with aging buckets</td></tr>
+          <tr><td>Payables</td><td>What you owe each vendor</td></tr>
+          <tr><td>Expenses</td><td>By category over any period</td></tr>
+          <tr><td>Cash book</td><td>Opening cash + receipts − payments − expenses = closing</td></tr>
+          <tr><td>Top products / customers</td><td>Best sellers and biggest accounts</td></tr>
+          <tr><td>Salaries</td><td>Staff payments over a period</td></tr>
+        </tbody>
+      </table></div>
+      <p>PDF exports carry your shop logo and header. Excel exports are real <code>.xlsx</code> files with
+         formatted columns. Filter combinations you use often can be saved as a preset and reloaded.</p>
+    </section>
+
+    <!-- ════════════════ ROLES ════════════════ -->
+    <section id="roles">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-shield"/></svg></span>Users &amp; roles</h2>
+      <p>Create staff accounts under <b>Users &amp; Roles</b>. Permissions are enforced on the server — hiding
+         a menu is a convenience, not the security boundary.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Capability</th><th>Super&nbsp;Admin</th><th>Admin</th><th>Manager</th><th>Cashier</th><th>Accountant</th></tr></thead>
+        <tbody>
+          <tr><td>Sell at POS</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td></tr>
+          <tr><td>Discount above limit</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+          <tr><td>Sales returns</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag view">Same day</span></td><td><span class="tag no">No</span></td></tr>
+          <tr><td>Products &amp; categories</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag view">View</span></td><td><span class="tag view">View</span></td></tr>
+          <tr><td>See cost &amp; profit</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag ok">Yes</span></td></tr>
+          <tr><td>Purchases &amp; vendors</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag view">View</span></td></tr>
+          <tr><td>Stock adjustments</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+          <tr><td>Payments</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag view">Receive</span></td><td><span class="tag ok">Yes</span></td></tr>
+          <tr><td>Expenses</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag ok">Yes</span></td></tr>
+          <tr><td>All reports</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag view">Own sales</span></td><td><span class="tag ok">Yes</span></td></tr>
+          <tr><td>Users &amp; roles</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+          <tr><td>Settings &amp; backup</td><td><span class="tag ok">Yes</span></td><td><span class="tag view">Partial</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td><td><span class="tag view">Partial</span></td></tr>
+          <tr><td>Audit log</td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+        </tbody>
+      </table></div>
+      <p>The matrix is editable — adjust exactly which permissions each role carries under
+         <b>Users &amp; Roles → Permissions</b>. The Super Admin always has everything.</p>
+
+      <h3>Two-factor authentication</h3>
+      <p>Any user can enable TOTP two-factor authentication under <b>Settings → Security</b>. Scan the QR
+         code (or type the secret) into an authenticator app; from then on sign-in asks for the six-digit
+         code. Disabling it requires the account password.</p>
+
+      <h3>Forgotten passwords</h3>
+      <p>There is no email reset by design — a shop should not depend on a mail server. An administrator
+         resets a staff password from the Users screen. Keep at least two administrator accounts so you are
+         never locked out.</p>
+    </section>
+
+    <!-- ════════════════ SETTINGS ════════════════ -->
+    <section id="settings">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-settings"/></svg></span>Settings</h2>
+      <figure><img src="{{IMG:settings}}" alt="Settings screen" loading="lazy" /><figcaption>Settings is grouped into tabs; only administrators can open it</figcaption></figure>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Tab</th><th>Contains</th></tr></thead>
+        <tbody>
+          <tr><td><b>Shop</b></td><td>Name, logo, address, phone numbers, tax number — used on every invoice and PDF</td></tr>
+          <tr><td><b>Invoicing</b></td><td>Document number prefixes, footer terms, default receipt size, rounding</td></tr>
+          <tr><td><b>Business type</b></td><td>Re-apply a preset, or move to a different trade</td></tr>
+          <tr><td><b>Integrations</b></td><td>SMTP for email, WhatsApp links, email templates</td></tr>
+          <tr><td><b>Security</b></td><td>Two-factor authentication for your own account</td></tr>
+          <tr><td><b>Backup</b></td><td>Download a snapshot, restore one, configure nightly offsite upload</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ════════════════ BACKUP ════════════════ -->
+    <section id="backup">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-db"/></svg></span>Backup &amp; restore</h2>
+      <h3>In the app</h3>
+      <p><b>Settings → Backup</b> downloads a complete portable JSON snapshot of your shop. Restoring one
+         wipes the current data and reloads the snapshot in foreign-key order inside a single transaction —
+         so a failed restore leaves nothing half-applied.</p>
+      <div class="danger"><svg class="ico ico-lg"><use href="#i-alert"/></svg><div><b>Restore replaces everything</b>
+        Take a fresh backup immediately before restoring an older one. There is no undo.</div></div>
+
+      <h3>On a server</h3>
+      <p><code>deploy/backup.sh</code> runs <code>pg_dump</code> and prunes old dumps; the install steps
+         schedule it nightly at 3 AM. Copy the dumps off the server regularly — a backup that lives only on
+         the machine it protects is not a backup.</p>
+<pre><code><span class="c"># restore a dump into an empty database</span>
+psql -U softglaze -d softglaze -f softglaze-2026-08-06.sql</code></pre>
+
+      <h3>On the desktop</h3>
+      <p>Close the app and copy <span class="path">%APPDATA%\@softglaze\desktop</span> — that folder holds
+         the database, uploaded images and configuration. Restore by copying it back.</p>
+      <div class="warn"><svg class="ico ico-lg"><use href="#i-alert"/></svg><div><b>Images live outside the database</b>
+        A JSON snapshot or SQL dump records the <i>paths</i> of product photos, not the files. Always back up
+        your uploads folder alongside the database, or restored products will show placeholder icons.</div></div>
+    </section>
+
+    <!-- ════════════════ UPDATING ════════════════ -->
+    <section id="updating">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-refresh"/></svg></span>Updating</h2>
+      <h3>Server</h3>
+<pre><code><span class="k">cd</span> /var/www/softglaze
+bash deploy/update.sh</code></pre>
+      <p>The script backs up the database first, then pulls, installs, builds, applies any new migrations and
+         restarts the process under PM2.</p>
+      <h3>Desktop</h3>
+      <p>Run the newer installer over the existing installation. Your database, images and settings live in
+         <code>%APPDATA%</code> and are untouched; migrations are applied automatically on the next launch.</p>
+      <div class="tip"><svg class="ico ico-lg"><use href="#i-bulb"/></svg><div><b>Take a backup first</b>
+        Migrations are one-way. A snapshot before updating costs seconds and saves afternoons.</div></div>
+    </section>
+
+    <!-- ════════════════ INTEGRITY ════════════════ -->
+    <section id="integrity">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-scale"/></svg></span>Accounting integrity</h2>
+      <p>The books are designed so they cannot quietly drift:</p>
+      <ul>
+        <li>Money is an exact decimal everywhere — never a floating-point number. Quantities carry three
+            decimal places, money two, and rounding happens only at the edges.</li>
+        <li>Every financial write is <b>one</b> database transaction. A sale creates the invoice, its lines,
+            the stock movements, the payments, the balance updates and the audit entry together, or not at all.</li>
+        <li>The stock and account <b>ledgers are the source of truth</b>. The quantity on a product and the
+            balance on an account are caches, updated in that same transaction.</li>
+        <li>Financial documents are never hard-deleted. They are cancelled, or reversed with a return.</li>
+        <li>Each sale line stores the cost at the time of sale, so historic profit never changes when prices move.</li>
+      </ul>
+      <h3>The integrity check</h3>
+      <p>Administrators can run a built-in verification that proves the books balance. It confirms that
+         ledger sums match cached balances, that every document's totals add up, that customer and vendor
+         balances reconcile with their ledgers, and that <b>assets = liabilities + equity</b>.</p>
+<pre><code>GET /api/v1/reports/integrity</code></pre>
+      <p>An all-green result means every figure in every report is internally consistent.</p>
+    </section>
+
+    <!-- ════════════════ TROUBLESHOOTING ════════════════ -->
+    <section id="troubleshooting">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-life"/></svg></span>Troubleshooting</h2>
+
+      <h3>The desktop app shows an error about the background service</h3>
+      <p>Open <span class="path">%APPDATA%\@softglaze\desktop\desktop.log</span> — it records the whole
+         startup sequence and is rewritten on every launch. The last lines almost always name the cause.</p>
+
+      <h3>"Wrong email or password" when the password is right</h3>
+      <p>Check the account is still enabled — a disabled account reports "This account is disabled". If you
+         have genuinely lost the only administrator password, another administrator must reset it from the
+         Users screen.</p>
+
+      <h3>Sign-in says "Server did not respond correctly"</h3>
+      <p>The web app reached something that was not the API. Usually the API is not running, or the database
+         behind it is down. Check <code>/api/v1/health</code>, then confirm PostgreSQL is up and
+         <code>DATABASE_URL</code> is correct.</p>
+
+      <h3>Too many sign-in attempts</h3>
+      <p>Authentication endpoints are rate-limited to protect against brute force. Wait fifteen minutes, or
+         restart the API to clear the counter during development.</p>
+
+      <h3>Product images show a placeholder icon</h3>
+      <p>The database stores image <i>paths</i>; the files themselves live in your uploads folder. If that
+         folder was moved, emptied or left out of a restore, the paths no longer resolve. Restore the folder
+         from a backup, or re-upload the images. Confirm <code>UPLOAD_DIR</code> points where the files
+         actually are.</p>
+
+      <h3>Port already in use</h3>
+      <p>The desktop app moves to the next free port automatically. The development server does not — stop
+         whatever else is on port 4000, or change <code>PORT</code> in <code>apps/server/.env</code>.</p>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>Running both at once</b>
+        The desktop app and <code>npm run dev</code> both want port 4000. Either close one, or give the
+        development API a different <code>PORT</code>.</div></div>
+
+      <h3>Windows SmartScreen blocks the installer</h3>
+      <p>The build is not code-signed. Choose <b>More info → Run anyway</b>. Buying a code-signing
+         certificate removes the warning.</p>
+
+      <h3>Reports do not match what I expect</h3>
+      <p>Run the <a href="#integrity">integrity check</a> first. If it is all green, the figures are
+         internally consistent and the difference is usually a date range, a cancelled document, or the
+         accrual-versus-cash distinction described under <a href="#money">Money &amp; accounts</a>.</p>
+    </section>
+
+    <!-- ════════════════ API ════════════════ -->
+    <section id="api">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-code"/></svg></span>API reference</h2>
+      <p>Base URL <code>/api/v1</code>. Authenticate with <code>Authorization: Bearer &lt;accessToken&gt;</code>.
+         List endpoints accept <code>?page&amp;limit&amp;search&amp;sort&amp;from&amp;to</code>.</p>
+
+      <h3>Response shape</h3>
+<pre><code>{ <span class="s">"ok"</span>: true,  <span class="s">"data"</span>: { … } }
+{ <span class="s">"ok"</span>: false, <span class="s">"error"</span>: { <span class="s">"code"</span>: <span class="s">"INSUFFICIENT_STOCK"</span>,
+                     <span class="s">"message"</span>: <span class="s">"Sariya 12mm has only 40 kg in stock"</span> } }</code></pre>
+      <p>Error codes: <code>VALIDATION</code>, <code>UNAUTHORIZED</code>, <code>FORBIDDEN</code>,
+         <code>NOT_FOUND</code>, <code>INSUFFICIENT_STOCK</code>, <code>CREDIT_LIMIT_EXCEEDED</code>,
+         <code>DUPLICATE</code>, <code>CONFLICT</code>, <code>TOTP_REQUIRED</code>,
+         <code>TOTP_INVALID</code>, <code>SERVER_ERROR</code>.</p>
+
+      <h3>Authentication</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Method</th><th>Path</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/auth/register</code></td><td>First user only — becomes Super Admin, then closes</td></tr>
+          <tr><td>POST</td><td><code>/auth/login</code></td><td>Returns user, permissions, access and refresh tokens</td></tr>
+          <tr><td>POST</td><td><code>/auth/refresh</code></td><td>Rotates the refresh token</td></tr>
+          <tr><td>POST</td><td><code>/auth/logout</code></td><td>Invalidates the refresh token</td></tr>
+          <tr><td>GET</td><td><code>/auth/me</code></td><td>Current user and permissions</td></tr>
+          <tr><td>GET</td><td><code>/auth/setup-status</code></td><td>Whether a first account is still needed</td></tr>
+          <tr><td>POST</td><td><code>/auth/2fa/setup</code> · <code>/enable</code> · <code>/disable</code></td><td>TOTP two-factor</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Main resource groups</h3>
+      <p>Each supports the usual list, read, create and update operations unless noted.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Area</th><th>Endpoints</th></tr></thead>
+        <tbody>
+          <tr><td>Catalogue</td><td><code>/products</code>, <code>/categories</code>, <code>/brands</code>, <code>/units</code>, <code>/price-groups</code>, <code>/rate-contracts</code></td></tr>
+          <tr><td>Selling</td><td><code>/sales</code>, <code>/bookings</code>, <code>/estimator</code>, <code>/deliveries</code>, <code>/delivery-trips</code></td></tr>
+          <tr><td>Buying</td><td><code>/purchases</code>, <code>/purchase-orders</code>, <code>/vendor-notes</code></td></tr>
+          <tr><td>Stock</td><td><code>/stock</code>, <code>/cutting-jobs</code>, <code>/tools</code></td></tr>
+          <tr><td>People</td><td><code>/customers</code>, <code>/customer-sites</code>, <code>/vendors</code>, <code>/employees</code>, <code>/attendance</code>, <code>/hr</code></td></tr>
+          <tr><td>Money</td><td><code>/accounts</code>, <code>/payments</code>, <code>/payment-methods</code>, <code>/cheques</code>, <code>/expenses</code>, <code>/day-close</code>, <code>/promises</code>, <code>/ledger</code></td></tr>
+          <tr><td>Reporting</td><td><code>/reports</code>, <code>/saved-filters</code></td></tr>
+          <tr><td>System</td><td><code>/settings</code>, <code>/users</code>, <code>/permissions</code>, <code>/notifications</code>, <code>/messages</code>, <code>/outreach</code>, <code>/audit</code>, <code>/backup</code>, <code>/import</code></td></tr>
+          <tr><td>Health</td><td><code>/health</code> — no authentication required</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Reports and exports</h3>
+      <p>Report endpoints render on screen and export. For example:</p>
+<pre><code>GET /api/v1/reports/dashboard
+GET /api/v1/reports/profit-loss?from=2026-06-01&amp;to=2026-06-30
+GET /api/v1/reports/integrity</code></pre>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>Rate limiting</b>
+        Every <code>/auth</code> endpoint is limited to 50 requests per 15 minutes per IP address. Other
+        endpoints are not rate-limited.</div></div>
+    </section>
+
+    <!-- ════════════════ STACK ════════════════ -->
+    <section id="stack">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-layers"/></svg></span>Tech stack &amp; structure</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+        <tbody>
+          <tr><td>Web app</td><td>React 18, Vite 6, TypeScript, Tailwind CSS v4, TanStack Query, React Router, Recharts</td></tr>
+          <tr><td>API</td><td>Node.js, Express, TypeScript, Prisma ORM, Zod, JWT, bcrypt, sharp</td></tr>
+          <tr><td>Database</td><td>PostgreSQL 14+</td></tr>
+          <tr><td>Desktop</td><td>Electron — spawns the built API, serves the built web app, bundles PostgreSQL 16</td></tr>
+          <tr><td>Money</td><td>Prisma <code>Decimal</code> / decimal.js — never JavaScript floats</td></tr>
+          <tr><td>Exports</td><td>pdfmake (PDF) and ExcelJS (XLSX), generated server-side</td></tr>
+        </tbody>
+      </table></div>
+<pre><code>softglaze/
+├─ apps/
+│  ├─ server/     Express + Prisma API — routes, lib, prisma/schema.prisma
+│  ├─ web/        React + Vite front-end — pages, components, context, lib
+│  └─ desktop/    Electron wrapper and installer packaging
+├─ deploy/        VPS scripts — deploy, update, backup, nginx, PM2
+├─ docs/          Product documentation (this file)
+└─ package.json   npm workspaces and root scripts</code></pre>
+    </section>
+
+    <!-- ════════════════ CHANGELOG ════════════════ -->
+    <section id="changelog">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-history"/></svg></span>Changelog</h2>
+      <h3>1.0.1</h3>
+      <p>Stability release. Every item below was reproduced, fixed and re-tested.</p>
+      <ul>
+        <li><b>Blank window after creating the owner account.</b> On a brand-new installation the app
+            unmounted itself the moment the one-time setup screen should have appeared, leaving an empty
+            window and no way in. Affected every fresh install.</li>
+        <li><b>Signed out on every reload.</b> Restoring a session discarded a perfectly valid seven-day
+            sign-in token, so reloading the page more than fifteen minutes after signing in sent you back
+            to the login screen. Sessions now last as designed.</li>
+        <li><b>Desktop app could open onto the wrong server.</b> It assumed port 4000 was free; if anything
+            else held it, the window loaded that other program instead of the shop. It now claims a free
+            port at startup and records which one in its log.</li>
+        <li><b>Confusing message after too many sign-in attempts.</b> The rate limiter replied in a format
+            the app could not read, so it reported that the server was broken. It now says plainly that you
+            should wait a few minutes.</li>
+        <li><b>Product images can now ship with a data-preloaded build</b> and are restored on first launch.</li>
+        <li>Added an automated check that prevents the class of defect behind the blank-window bug from
+            ever reaching a release again.</li>
+      </ul>
+      <h3>1.0.0</h3>
+      <p>Initial release — POS and sales, inventory and purchasing, customer and vendor ledgers with
+         credit control, accounts and expenses, payroll, the full report suite with PDF and Excel export,
+         role permissions, two-factor authentication, backup and restore, business-type presets, and both
+         the browser and Windows desktop targets.</p>
+    </section>
+
+    <!-- ════════════════ SUPPORT ════════════════ -->
+    <section id="support">
+      <h2><span class="hicon"><svg class="ico ico-lg"><use href="#i-help"/></svg></span>Support &amp; license</h2>
+      <p>SoftGlaze Stock Manager is a commercial product — licensed, not sold. Your licence terms are
+         included with your purchase; see the <code>LICENSE</code> file supplied with the source.</p>
+
+      <h3>Useful links</h3>
+      <div class="cards">
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-globe"/></svg></span><b>Website</b></div>
+          <p><a href="https://softglaze.com">softglaze.com</a> — product information, other SoftGlaze products and company contact details.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-book"/></svg></span><b>Latest documentation</b></div>
+          <p><a href="https://softglaze.com/docs/stock-manager/">softglaze.com/docs/stock-manager</a> — always the newest version of this guide.</p></div>
+        <div class="fcard"><div class="top"><span class="bx"><svg class="ico"><use href="#i-code"/></svg></span><b>Source repository</b></div>
+          <p><a href="https://github.com/softglazee/Softglaze-inventory-management">github.com/softglazee</a> — the code base, for licence holders.</p></div>
+      </div>
+
+      <h3>Before contacting support</h3>
+      <ol>
+        <li>Check <a href="#troubleshooting">Troubleshooting</a> — it covers the common cases.</li>
+        <li>For the desktop app, attach <span class="path">%APPDATA%\@softglaze\desktop\desktop.log</span>.</li>
+        <li>For a server install, attach the PM2 log and the output of <code>nginx -t</code>.</li>
+        <li>Tell us the version, whether it is the desktop or browser build, and the exact steps that
+            reproduce the problem.</li>
+      </ol>
+      <p>Contact support through the channel you purchased from.</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="footlinks">
+    <a href="https://softglaze.com">softglaze.com</a>
+    <a href="https://softglaze.com/docs/stock-manager/">Documentation</a>
+    <a href="https://github.com/softglazee/Softglaze-inventory-management">Source repository</a>
+  </div>
+  <b>SoftGlaze Stock Manager</b> — documentation v{{VERSION}} · built {{BUILD_DATE}}. Inventory + Point of
+  Sale for retail and wholesale shops. © SoftGlaze.
+</footer>
+
+<button class="totop" id="totop" aria-label="Back to top"><svg class="ico ico-lg"><use href="#i-up"/></svg></button>
+
+<script>
+(function () {
+  var nav = document.getElementById('nav');
+  var links = [].slice.call(nav.querySelectorAll('a'));
+  var sections = links
+    .map(function (a) { return document.querySelector(a.getAttribute('href')); })
+    .filter(Boolean);
+
+  /* highlight the section currently in view */
+  function sync() {
+    var pos = window.scrollY + 130, current = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= pos) current = sections[i];
+    }
+    links.forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current.id);
+    });
+    document.getElementById('totop').classList.toggle('show', window.scrollY > 500);
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { sync(); ticking = false; });
+  }, { passive: true });
+  sync();
+
+  document.getElementById('totop').addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* filter the sidebar */
+  var filter = document.getElementById('navfilter');
+  filter.addEventListener('input', function () {
+    var q = filter.value.trim().toLowerCase();
+    links.forEach(function (a) {
+      a.classList.toggle('hidden', q && a.textContent.toLowerCase().indexOf(q) === -1);
+    });
+    [].forEach.call(nav.querySelectorAll('.grouplabel'), function (label) {
+      var any = false, el = label.nextElementSibling;
+      while (el && el.tagName === 'A') {
+        if (!el.classList.contains('hidden')) any = true;
+        el = el.nextElementSibling;
+      }
+      label.style.display = any ? '' : 'none';
+    });
+  });
+
+  /* mobile drawer */
+  var body = document.body;
+  function close() { body.classList.remove('navopen'); }
+  document.getElementById('menubtn').addEventListener('click', function () {
+    body.classList.toggle('navopen');
+  });
+  document.getElementById('backdrop').addEventListener('click', close);
+  links.forEach(function (a) { a.addEventListener('click', close); });
+})();
+</script>
+</body>
+</html>

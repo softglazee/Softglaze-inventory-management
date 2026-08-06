@@ -64,8 +64,27 @@ app.use(express.json({ limit: "50mb" })); // large enough for backup/restore sna
 // Product images etc. (path.resolve so an absolute UPLOAD_DIR from the desktop app is honoured)
 app.use("/uploads", express.static(path.resolve(process.cwd(), process.env.UPLOAD_DIR ?? "uploads")));
 
-// Protect auth endpoints from brute force
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, standardHeaders: true });
+/**
+ * Protect auth endpoints from brute force.
+ *
+ * The custom handler matters: the default sends PLAIN TEXT, which the web client
+ * cannot parse as JSON, so a rate-limited user saw the generic "Server did not
+ * respond correctly" and thought the shop was broken. Answer in the standard
+ * error envelope so they get told to simply wait.
+ */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  handler: (_req, res) =>
+    res.status(429).json({
+      ok: false,
+      error: {
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many sign-in attempts. Please wait a few minutes and try again.",
+      },
+    }),
+});
 
 app.get("/api/v1/health", (_req, res) => res.json({ ok: true, data: { status: "up", ts: Date.now() } }));
 

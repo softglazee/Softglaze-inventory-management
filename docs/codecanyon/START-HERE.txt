@@ -1,0 +1,82 @@
+================================================================
+ SoftGlaze Stock Manager  —  v{{VERSION}}
+ Inventory + Point of Sale (POS)
+================================================================
+
+Thank you for your purchase!
+
+WHAT'S IN THIS PACKAGE
+----------------------
+  Installer/       Ready-to-run Windows desktop app (works fully offline and
+                   bundles its own database). The easy way to run it on a shop PC.
+  Source/          Full source code — monorepo: server API, web app, desktop shell.
+  Documentation/   Open index.html in any browser for the complete manual.
+  LICENSE.txt      Your license terms.
+  START-HERE.txt   This file.
+
+There are TWO ways to run SoftGlaze. Pick whichever suits you.
+
+================================================================
+ OPTION 1 — Desktop app  (easiest, recommended for a single shop)
+================================================================
+No database, no internet, and no setup required.
+
+  1. Open the   Installer\   folder.
+  2. Run        SoftGlaze-Stock-Manager-Setup-{{VERSION}}.exe
+  3. Follow the installer, then launch "SoftGlaze Stock Manager".
+
+Windows SmartScreen may warn that the publisher is unknown, because the build is
+not code-signed. Choose "More info" then "Run anyway".
+
+On first launch it creates its own private PostgreSQL database, applies the
+schema, and seeds defaults automatically. This takes up to a minute the first
+time. Register the first account — it becomes the owner / Super Admin — then pick
+your business type.
+
+Everything the shop owns (database, uploaded images, settings, logs) lives in:
+
+    %APPDATA%\@softglaze\desktop
+
+Close the app and copy that folder for a complete backup.
+
+================================================================
+ OPTION 2 — Self-host / browser  (server + web, e.g. VPS or LAN)
+================================================================
+Requirements: Node.js 18+ (20 / 22 recommended) and PostgreSQL 14+.
+
+  1. cd Source
+  2. npm install
+  3. copy  apps\server\.env.example  ->  apps\server\.env
+     Edit it: set DATABASE_URL and two strong JWT secrets.
+  4. npm run db:migrate
+  5. npm run db:seed
+  6. npm run dev        (web at http://localhost:5173, API at :4000)
+
+Open http://localhost:5173 and register the first (owner) account.
+For production (nginx + PM2 + PostgreSQL, or single-origin mode) see
+Documentation\index.html and Source\deploy\README.md.
+
+================================================================
+ DOCUMENTATION
+================================================================
+Open  Documentation\index.html  in any browser. It is a single self-contained
+file (no internet needed) covering features, installation for all three targets,
+configuration, everyday use, backup, troubleshooting and the API.
+
+The newest version is always online at:
+
+    https://softglaze.com/docs/stock-manager/
+
+================================================================
+ LINKS
+================================================================
+  Website          https://softglaze.com
+  Documentation    https://softglaze.com/docs/stock-manager/
+
+================================================================
+ LICENSE & SUPPORT
+================================================================
+Commercial product — licensed, not sold. See LICENSE.txt and the license that
+accompanied your purchase. For support, contact us through your purchase channel.
+
+(c) 2026 SoftGlaze. All rights reserved.

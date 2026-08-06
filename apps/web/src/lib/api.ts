@@ -38,6 +38,17 @@ async function tryRefresh(): Promise<boolean> {
   return false;
 }
 
+/**
+ * Endpoints where a 401 must NOT trigger a refresh-and-retry: on these it means
+ * "these credentials are wrong", and retrying /auth/refresh would loop.
+ *
+ * Everything else under /auth — /auth/me above all — DOES need the retry. Excluding
+ * the whole /auth prefix used to log people out on every reload once the 15-minute
+ * access token expired, because the session-restore call to /auth/me 401'd and the
+ * still-valid 7-day refresh token was discarded unused.
+ */
+const NO_REFRESH_RETRY = ["/auth/login", "/auth/register", "/auth/refresh"];
+
 export async function api<T = unknown>(
   path: string,
   options: { method?: string; body?: unknown; isForm?: boolean } = {},
@@ -53,7 +64,7 @@ export async function api<T = unknown>(
     body: options.isForm ? (options.body as FormData) : options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  if (res.status === 401 && !_retried && !path.startsWith("/auth/")) {
+  if (res.status === 401 && !_retried && !NO_REFRESH_RETRY.some((p) => path.startsWith(p))) {
     const refreshed = await tryRefresh();
     if (refreshed) return api<T>(path, options, true);
   }

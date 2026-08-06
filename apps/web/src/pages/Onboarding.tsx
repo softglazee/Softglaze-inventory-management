@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Anvil, Store, Check, ArrowRight } from "lucide-react";
 import { api, ApiError } from "../lib/api";
@@ -44,11 +44,9 @@ export default function Onboarding() {
     onError: (e: ApiError) => setError(e.message),
   });
 
-  // Only the owner runs onboarding
-  if (user && user.role !== "SUPER_ADMIN") {
-    navigate("/");
-    return null;
-  }
+  // Only the owner runs onboarding. Render a redirect rather than calling
+  // navigate() during render, which mutates the router while React is rendering.
+  if (user && user.role !== "SUPER_ADMIN") return <Navigate to="/" replace />;
 
   return (
     <div className="min-h-screen p-6 flex flex-col items-center">

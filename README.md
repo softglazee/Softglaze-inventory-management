@@ -1,6 +1,6 @@
 # 💎 SoftGlaze Stock Manager — Inventory + POS
 
-![version](https://img.shields.io/badge/version-1.0.0-FF9F43) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-2C7BE5) ![stack](https://img.shields.io/badge/stack-React%20%7C%20Node%20%7C%20Prisma%20%7C%20PostgreSQL-334155) ![license](https://img.shields.io/badge/license-Commercial-6f42c1)
+![version](https://img.shields.io/badge/version-1.0.1-FF9F43) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-2C7BE5) ![stack](https://img.shields.io/badge/stack-React%20%7C%20Node%20%7C%20Prisma%20%7C%20PostgreSQL-334155) ![license](https://img.shields.io/badge/license-Commercial-6f42c1)
 
 A premium, production‑ready **Stock Management + Point‑of‑Sale** system for retail and
 wholesale shops. One codebase ships to **both** the browser (VPS / self‑host) and the
@@ -17,8 +17,13 @@ One codebase, two targets:
 - 🖥 **Desktop app** for the shop PC (Electron, Windows installer)
 - 🌐 **Browser app** on your own server (access from anywhere)
 
-📚 **Full buyer documentation:** open [`docs/documentation.html`](docs/documentation.html)
-in any browser.
+📚 **Full documentation:** online at
+**[softglaze.com/docs/stock-manager](https://softglaze.com/docs/stock-manager/)**, or open the
+offline copy [`docs/documentation.html`](docs/documentation.html) in any browser — it is a single
+self‑contained file with its screenshots embedded.
+
+> Regenerate it after changing screenshots or content with `node docs/build-docs.cjs`
+> (edit `docs/documentation.src.html`, replace images in `docs/assets/`).
 
 ---
 
