@@ -85,6 +85,12 @@ module.exports = {
     { from: "../server/dist", to: "server/dist" },
     { from: "../server/prisma", to: "server/prisma" },
     { from: "../web/dist", to: "web/dist" },
+    // Product/branding images. Empty in the generic product; for a data-preloaded
+    // client build, drop the shop's uploads here so the photos its initial-data.sql
+    // references actually ship. main.cjs copies these into %APPDATA%/…/uploads on
+    // launch. Keep the folder present (even if empty) — electron-builder fails on a
+    // missing `from`.
+    { from: "../server/uploads", to: "server/uploads" },
     // Bundled offline PostgreSQL runtime (staged by scripts/stage-pg.cjs → vendor/pgsql).
     { from: "vendor/pgsql", to: "pgsql" },
   ],

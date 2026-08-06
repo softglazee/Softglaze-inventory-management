@@ -108,13 +108,14 @@ export default function Layout() {
     queryFn: () => api<{ settings: Record<string, string> }>("/settings"),
     staleTime: 60_000,
   });
-  if (
-    settingsData &&
+  // NOTE: the redirect itself happens at the BOTTOM of this component, after every
+  // hook has run. Returning early here would render fewer hooks on the pass where
+  // the settings query resolves than on the loading pass — React error #300, which
+  // blanks the whole app on a fresh install (the only time this flag is unset).
+  const needsOnboarding =
+    !!settingsData &&
     settingsData.settings.onboarding_done !== "1" &&
-    user?.role === "SUPER_ADMIN"
-  ) {
-    return <Navigate to="/onboarding" replace />;
-  }
+    user?.role === "SUPER_ADMIN";
 
   // Business-Type capabilities tailor the sidebar (falls back to all-enabled
   // while settings load, so nothing flicker-hides).
@@ -150,6 +151,10 @@ export default function Layout() {
   const [headerSearch, setHeaderSearch] = useState("");
   const toggleSection = (s: string) => setOpenSections((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   const year = new Date().getFullYear();
+
+  // First run: the owner picks a Business Type before anything else. Safe to bail
+  // out here — every hook above has already run on this pass.
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />;
 
   return (
     <div className="min-h-screen flex bg-app">

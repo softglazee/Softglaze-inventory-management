@@ -28,7 +28,10 @@ deliverables/
 .env
 .env.*
 !.env.example
-apps/server/uploads/
+# Ignore uploaded images, but KEEP the folder — the desktop build bundles it
+# (electron-builder fails on a missing `from`), so it must exist in a fresh clone.
+apps/server/uploads/*
+!apps/server/uploads/README.txt
 *.sql
 !apps/server/prisma/migrations/**/*.sql   # keep Prisma migrations tracked
 *.sql.gz

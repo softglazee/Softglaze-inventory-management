@@ -24,9 +24,11 @@ const fs = require("fs");
 const crypto = require("crypto");
 const { spawn, spawnSync } = require("child_process");
 const http = require("http");
+const net = require("net");
 
-const PORT = Number(process.env.SOFTGLAZE_PORT || 4000);
-const BASE = `http://localhost:${PORT}`;
+// Preferred port; the real one is chosen at startup by findFreePort() below.
+let PORT = Number(process.env.SOFTGLAZE_PORT || 4000);
+let BASE = `http://localhost:${PORT}`;
 const DEV = process.env.SOFTGLAZE_DEV === "1";
 const isPackaged = app.isPackaged;
 
@@ -37,6 +39,9 @@ const SEED_ENTRY = path.join(RES, "server", "dist", "seed.js");
 // Optional data snapshot — present only in a data-preloaded (client-specific) build;
 // absent in the generic product, which seeds an empty shop instead.
 const INITIAL_DATA = path.join(RES, "server", "dist", "initial-data.sql");
+// Product/branding images shipped with the build (empty in the generic product;
+// populated in a data-preloaded client build). Restored into userData on launch.
+const BUNDLED_UPLOADS = path.join(RES, "server", "uploads");
 const SCHEMA_PATH = path.join(RES, "server", "prisma", "schema.prisma");
 const WEB_DIST = path.join(RES, "web", "dist");
 const NODE_MODULES = isPackaged ? path.join(RES, "node_modules") : path.join(__dirname, "..", "..", "node_modules");
@@ -82,6 +87,66 @@ const log = (s) => {
 };
 process.on("uncaughtException", (e) => { if (e && e.code === "EPIPE") return; fileLog(`\n[uncaughtException] ${(e && e.stack) || e}\n`); });
 process.on("unhandledRejection", (e) => { fileLog(`\n[unhandledRejection] ${(e && e.stack) || e}\n`); });
+
+/**
+ * Pick a port we can actually bind, starting at the preferred one.
+ *
+ * The port used to be hard-coded. If anything else already held it (a dev server,
+ * another copy of the app, an unrelated tool) our server died with EADDRINUSE —
+ * but waitForHealth then got a perfectly good 200 from the STRANGER on that port,
+ * so the window opened on someone else's server and rendered its raw JSON instead
+ * of the shop. Probing first makes startup immune to whatever else is running.
+ *
+ * The probe calls listen(port) with NO host — byte-for-byte the same call shape the
+ * server makes (app.listen(PORT)), so it resolves to the same dual-stack `::` bind.
+ * Probing a different address family could report a port free that the server then
+ * fails to claim.
+ */
+function findFreePort(start, tries = 25) {
+  return new Promise((resolve, reject) => {
+    let port = start;
+    let left = tries;
+    const attempt = () => {
+      const probe = net.createServer();
+      probe.once("error", () => {
+        probe.close(() => {});
+        if (--left <= 0) return reject(new Error(`No free port between ${start} and ${start + tries - 1}.`));
+        port++;
+        attempt();
+      });
+      probe.listen(port, () => probe.close(() => resolve(port)));
+    };
+    attempt();
+  });
+}
+
+/**
+ * First run: copy any bundled product/branding images into the writable uploads
+ * dir. A data-preloaded (client) build ships the images that its initial-data.sql
+ * references — without this the shop opens with every photo broken. Only fills in
+ * files that aren't already there, so it's safe on every launch and never clobbers
+ * anything the shop uploaded itself.
+ */
+function restoreBundledUploads() {
+  const dest = path.join(app.getPath("userData"), "uploads");
+  fs.mkdirSync(dest, { recursive: true });
+  if (!fs.existsSync(BUNDLED_UPLOADS)) return;
+  let copied = 0;
+  const walk = (from, to) => {
+    for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+      const src = path.join(from, entry.name);
+      const dst = path.join(to, entry.name);
+      if (entry.isDirectory()) { fs.mkdirSync(dst, { recursive: true }); walk(src, dst); }
+      else if (!fs.existsSync(dst)) { fs.copyFileSync(src, dst); copied++; }
+    }
+  };
+  try {
+    walk(BUNDLED_UPLOADS, dest);
+    if (copied) log(`[uploads] restored ${copied} bundled file(s)\n`);
+  } catch (e) {
+    log(`[uploads] restore failed: ${e.message}\n`); // non-fatal — the shop still opens
+  }
+}
 
 /** Editable config in %APPDATA%/SoftGlaze/softglaze.config.json */
 function loadConfig() {
@@ -309,13 +374,19 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on("second-instance", () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     log("app ready\n");
     if (DEV) { createWindow(); return; }
     showSplash();
     try {
+      // Claim a port BEFORE anything else, so the window can never end up pointed
+      // at a foreign server that happens to be sitting on our preferred one.
+      PORT = await findFreePort(PORT);
+      BASE = `http://localhost:${PORT}`;
+      log(`[port] serving on ${PORT}\n`);
       const cfg = loadConfig();
       ensureDatabase(cfg);
+      restoreBundledUploads();
       startServer(cfg);
     } catch (e) {
       closeSplash();
