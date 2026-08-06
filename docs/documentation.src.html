@@ -916,6 +916,36 @@ sudo certbot --nginx -d stock.yourshop.com</code></pre>
       <p>The matrix is editable — adjust exactly which permissions each role carries under
          <b>Users &amp; Roles → Permissions</b>. The Super Admin always has everything.</p>
 
+      <h3>Signing in</h3>
+      <p><b>Keep me signed in</b> on the sign-in screen decides how long the shop stays open:</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Setting</th><th>Behaviour</th><th>Use it for</th></tr></thead>
+        <tbody>
+          <tr><td><b>On</b> (default)</td><td>You stay signed in for up to seven days, even after closing the app or the browser. No password needed in between.</td><td>The shop's own counter PC or the owner's laptop</td></tr>
+          <tr><td><b>Off</b></td><td>The session ends the moment the window closes. Signing in is required next time.</td><td>A shared or public computer</td></tr>
+        </tbody>
+      </table></div>
+      <p>Either way, signing out from the account menu ends the session immediately, and changing a
+         password signs that account out everywhere else.</p>
+
+      <h3>Forgotten passwords</h3>
+      <p>There are two independent routes back in, so a shop can never be locked out.</p>
+      <ol class="steps">
+        <li><b>Email a reset link</b>
+          Click <b>Forgot password?</b> on the sign-in screen and enter your address. The link lasts
+          one hour, works once, and signs the account out everywhere when used.
+          <p>This needs email to be configured (<b>Settings → Integrations</b>). An offline desktop
+             install has no mail server, so use the second route there.</p>
+        </li>
+        <li><b>An administrator resets it</b>
+          From <b>Users &amp; Roles</b>, open the user and set a new password. Always available, no
+          email required. Keep at least two administrator accounts so someone can always do this.
+        </li>
+      </ol>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>The reset page never says whether an address has an account</b>
+        It gives the same answer either way, so it cannot be used to discover who works at the
+        shop.</div></div>
+
       <h3>Two-factor authentication</h3>
       <p>Any user can enable TOTP two-factor authentication under <b>Settings → Security</b>. Scan the QR
          code (or type the secret) into an authenticator app; from then on sign-in asks for the six-digit
@@ -937,11 +967,45 @@ sudo certbot --nginx -d stock.yourshop.com</code></pre>
           <tr><td><b>Shop</b></td><td>Name, logo, address, phone numbers, tax number — used on every invoice and PDF</td></tr>
           <tr><td><b>Invoicing</b></td><td>Document number prefixes, footer terms, default receipt size, rounding</td></tr>
           <tr><td><b>Business type</b></td><td>Re-apply a preset, or move to a different trade</td></tr>
-          <tr><td><b>Integrations</b></td><td>SMTP for email, WhatsApp links, email templates</td></tr>
+          <tr><td><b>Integrations</b></td><td>SMTP for email, WhatsApp links, email templates — see below</td></tr>
           <tr><td><b>Security</b></td><td>Two-factor authentication for your own account</td></tr>
           <tr><td><b>Backup</b></td><td>Download a snapshot, restore one, configure nightly offsite upload</td></tr>
         </tbody>
       </table></div>
+
+      <h3>Email (SMTP)</h3>
+      <p>Setting this up unlocks emailed statements, payment reminders, bulk outreach and the
+         <a href="#roles">forgotten-password link</a>. Everything sent is recorded under <b>Messages</b>.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Field</th><th>Typical value</th></tr></thead>
+        <tbody>
+          <tr><td>SMTP host</td><td><code>smtp.gmail.com</code>, <code>smtp.office365.com</code>, or your host's server</td></tr>
+          <tr><td>Port</td><td><code>587</code> for STARTTLS, <code>465</code> when using SSL</td></tr>
+          <tr><td>Secure</td><td>On only for port 465</td></tr>
+          <tr><td>Username / password</td><td>The mailbox login. Gmail and Outlook require an <b>app password</b>, not your normal one.</td></tr>
+          <tr><td>From name</td><td>What recipients see as the sender — usually your shop name</td></tr>
+        </tbody>
+      </table></div>
+      <p>Use <b>Send test email</b> to confirm it works before relying on it. If the shop has no mail
+         account, leave this empty — everything else works, and password resets fall back to an
+         administrator.</p>
+
+      <h3>Pictures</h3>
+      <p>Images are managed inside the app; nothing needs to be uploaded to the server by hand.</p>
+      <ul>
+        <li><b>Shop logo</b> — <b>Settings → Shop</b>. Appears on invoices, receipts, PDF reports and
+            the sign-in screen. It can be replaced or removed at any time.</li>
+        <li><b>Product photos</b> — open a product and drag images onto the box, or click to browse.
+            Up to five per product. Click one to make it the <b>primary</b> picture (the one shown in
+            POS and lists), or delete it with the bin icon. Deleting the primary promotes the next
+            image automatically.</li>
+        <li><b>Category pictures</b> — set on the category, used for the POS tiles.</li>
+        <li><b>Profile pictures</b> — each user sets their own under <b>My account</b>.</li>
+      </ul>
+      <div class="note"><svg class="ico ico-lg"><use href="#i-info"/></svg><div><b>Images are files, not database rows</b>
+        The database stores the <i>path</i> to each picture; the files live in your uploads folder.
+        Back up both together, or restored products will show placeholder icons. See
+        <a href="#backup">Backup &amp; restore</a>.</div></div>
     </section>
 
     <!-- ════════════════ BACKUP ════════════════ -->
@@ -1152,6 +1216,14 @@ GET /api/v1/reports/integrity</code></pre>
         <li><b>Product images can now ship with a data-preloaded build</b> and are restored on first launch.</li>
         <li>Added an automated check that prevents the class of defect behind the blank-window bug from
             ever reaching a release again.</li>
+      </ul>
+      <h4>New in 1.0.1</h4>
+      <ul>
+        <li><b>Keep me signed in.</b> A choice on the sign-in screen: stay signed in for up to seven
+            days on your own machine, or end the session the moment the window closes on a shared one.</li>
+        <li><b>Forgot password.</b> Request an emailed reset link that lasts an hour and works once.
+            Where email isn't configured — an offline desktop shop, for instance — the page says so and
+            points to an administrator, who can still reset it from Users &amp; Roles.</li>
       </ul>
       <h3>1.0.0</h3>
       <p>Initial release — POS and sales, inventory and purchasing, customer and vendor ledgers with

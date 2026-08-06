@@ -33,7 +33,10 @@ deliverables/
 apps/server/uploads/*
 !apps/server/uploads/README.txt
 *.sql
-!apps/server/prisma/migrations/**/*.sql   # keep Prisma migrations tracked
+# Keep Prisma migrations tracked. The comment MUST be on its own line — a trailing "#"
+# is literal text in .gitignore, not a comment, so it silently broke this negation and
+# new migrations were being dropped from commits.
+!apps/server/prisma/migrations/**/*.sql
 *.sql.gz
 *.dump
 

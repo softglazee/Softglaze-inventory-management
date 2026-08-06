@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Anvil, LogIn } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { api, ApiError } from "../lib/api";
+import { api, ApiError, getRemember, setRemember } from "../lib/api";
 import ThemeToggle from "../components/ThemeToggle";
 
 export default function Login() {
@@ -15,6 +15,7 @@ export default function Login() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [totpNeeded, setTotpNeeded] = useState(false); // H3 — 2FA challenge
   const [totpCode, setTotpCode] = useState("");
+  const [remember, setRememberState] = useState(getRemember());
   const [shop, setShop] = useState<{ name: string; logo?: string }>({ name: "SoftGlaze" });
 
   // If no user exists yet (fresh install), send owner to Register
@@ -34,6 +35,8 @@ export default function Login() {
     setError(null);
     setBusy(true);
     try {
+      // Decide the storage BEFORE the tokens arrive, so they land in the right place.
+      setRemember(remember);
       await login(email, password, totpNeeded ? totpCode : undefined);
     } catch (err) {
       const e = err as ApiError;
@@ -132,6 +135,21 @@ export default function Login() {
                 <p className="text-muted text-xs mt-1">Enter the 6-digit code from your authenticator app.</p>
               </div>
             )}
+
+            <div className="flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-sm text-muted cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-[var(--accent)] cursor-pointer"
+                  checked={remember}
+                  onChange={(e) => setRememberState(e.target.checked)}
+                />
+                Keep me signed in
+              </label>
+              <Link to="/forgot-password" className="text-sm text-accent font-semibold hover:underline">
+                Forgot password?
+              </Link>
+            </div>
 
             {error && <p className="text-danger text-sm">{error}</p>}
 

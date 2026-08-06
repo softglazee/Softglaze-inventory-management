@@ -6,16 +6,44 @@ const BASE = import.meta.env.VITE_API_URL ?? "/api/v1";
 
 export type ApiError = { code: string; message: string };
 
-let accessToken: string | null = localStorage.getItem("il-access");
-let refreshToken: string | null = localStorage.getItem("il-refresh");
+/**
+ * "Keep me signed in" decides WHERE the tokens live:
+ *   on  → localStorage   — survives closing the browser / the desktop app (7 days,
+ *                          the refresh-token lifetime)
+ *   off → sessionStorage — cleared the moment the tab or app closes
+ *
+ * The choice itself is kept in localStorage so a reload knows which store to read.
+ * Shared counter PCs should switch it off; a shop's own machine leaves it on.
+ */
+const REMEMBER_KEY = "il-remember";
+
+export function setRemember(remember: boolean) {
+  localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
+}
+export function getRemember(): boolean {
+  return localStorage.getItem(REMEMBER_KEY) !== "0"; // default on
+}
+function tokenStore(): Storage {
+  return getRemember() ? localStorage : sessionStorage;
+}
+/** Read from either store, so a reload finds the token wherever it was put. */
+function readToken(key: string): string | null {
+  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+}
+
+let accessToken: string | null = readToken("il-access");
+let refreshToken: string | null = readToken("il-refresh");
 
 export function setTokens(access: string | null, refresh: string | null) {
   accessToken = access;
   refreshToken = refresh;
-  if (access) localStorage.setItem("il-access", access);
-  else localStorage.removeItem("il-access");
-  if (refresh) localStorage.setItem("il-refresh", refresh);
-  else localStorage.removeItem("il-refresh");
+  const store = tokenStore();
+  const other = store === localStorage ? sessionStorage : localStorage;
+  for (const [key, value] of [["il-access", access], ["il-refresh", refresh]] as const) {
+    other.removeItem(key); // never leave a stale copy in the store we're not using
+    if (value) store.setItem(key, value);
+    else store.removeItem(key);
+  }
 }
 
 export function getRefreshToken() {

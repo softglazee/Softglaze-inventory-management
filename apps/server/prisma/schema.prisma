@@ -34,6 +34,11 @@ model User {
   totpSecret   String?   // H3 — base32 TOTP secret (2FA), null = not enrolled
   totpEnabled  Boolean   @default(false) // H3 — 2FA required at login for this user
   refreshToken String?   // hashed refresh token
+  // Self-service password reset. The emailed token is random and single-use; only its
+  // SHA-256 is stored, so a database leak cannot be replayed. Unique gives us the index
+  // to look the token up by (Postgres allows many NULLs in a unique index).
+  resetTokenHash   String?   @unique
+  resetTokenExpiry DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
