@@ -193,5 +193,15 @@ S3 / GCS URL.
 ## 🆘 Support & license
 
 Commercial product — licensed, not sold. See [`LICENSE`](LICENSE) and the terms
-included with your purchase. For setup, open [`docs/documentation.html`](docs/documentation.html);
-for anything else, contact support through your purchase channel.
+included with your purchase.
+
+| | |
+| --- | --- |
+| 📧 Email | [azhar@softglaze.com](mailto:azhar@softglaze.com) |
+| 💬 Phone / WhatsApp | [+92 300 0748477](https://wa.me/923000748477) |
+| 🌐 Website | [softglaze.com](https://softglaze.com) |
+| 📚 Documentation | [softglaze.com/docs/stock-and-accounts-manager](https://softglaze.com/docs/stock-and-accounts-manager/) |
+
+When reporting a problem, include the version, whether it is the desktop or browser build,
+and the steps that reproduce it. For the desktop app attach
+`%APPDATA%\@softglaze\desktop\desktop.log`.

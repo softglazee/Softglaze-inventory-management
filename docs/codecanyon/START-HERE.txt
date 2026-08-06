@@ -68,15 +68,21 @@ The newest version is always online at:
     https://softglaze.com/docs/stock-and-accounts-manager/
 
 ================================================================
- LINKS
+ SUPPORT & LINKS
 ================================================================
+  Email            azhar@softglaze.com
+  Phone / WhatsApp +92 300 0748477
   Website          https://softglaze.com
   Documentation    https://softglaze.com/docs/stock-and-accounts-manager/
 
+When reporting a problem, please include the version, whether you are running the
+desktop or the browser build, and the steps that reproduce it. For the desktop app,
+attach  %APPDATA%\@softglaze\desktop\desktop.log
+
 ================================================================
- LICENSE & SUPPORT
+ LICENSE
 ================================================================
 Commercial product — licensed, not sold. See LICENSE.txt and the license that
-accompanied your purchase. For support, contact us through your purchase channel.
+accompanied your purchase.
 
 (c) 2026 SoftGlaze. All rights reserved.
