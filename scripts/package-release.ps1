@@ -1,5 +1,9 @@
 # Builds the two shippable zips from the repo + the freshly built installer.
 #
+# Output goes to <repo-parent>\deliverables — a staging folder, NOT the production
+# folder. Copy the results across by hand once you are happy with them, so a rebuild
+# can never overwrite what has already been handed to a customer.
+#
 #   CodeCanyon zip:  SoftGlaze-Stock-Manager-v<ver>\
 #                      LICENSE.txt, START-HERE.txt,
 #                      Documentation\index.html   (docs/documentation.html)
@@ -75,9 +79,13 @@ if (Test-Path $srcZip) { Remove-Item $srcZip -Force }
 Compress-Archive -Path (Join-Path $SRC '*') -DestinationPath $srcZip -CompressionLevel Optimal
 Write-Output "[zip] $(Split-Path $srcZip -Leaf)"
 
-# ── 4. Standalone installer ───────────────────────────────────────────────────
+# ── 4. Standalone installer + the documentation page ──────────────────────────
+# The docs are also embedded in the CodeCanyon zip, but a loose copy here means a
+# rebuild leaves a COMPLETE set in one folder. Without it the page sitting here would
+# quietly go stale against the zip after the next build.
 Copy-Item $SETUP (Join-Path $OUT "SoftGlaze-Stock-Manager-Setup-$VER.exe") -Force
-Write-Output "[copy] installer"
+Copy-Item $docs  (Join-Path $OUT 'documentation.html') -Force
+Write-Output "[copy] installer + documentation.html"
 
 Remove-Item $STAGE -Recurse -Force
 Get-ChildItem $OUT | Select-Object @{n='MB';e={[math]::Round($_.Length/1MB,2)}},LastWriteTime,Name |
